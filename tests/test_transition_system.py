@@ -5,7 +5,7 @@ Description:
 """
 import unittest
 
-from kltl0.transition_system import (
+from kltl0.systems.transition_system import (
     TransitionSystem,
 )
 
@@ -47,6 +47,41 @@ class TestTransitionSystem(unittest.TestCase):
             ts1.transitions[0], (0, 0, 1),
         )
 
+    def test_add_label1(self):
+        ts1 = TransitionSystem(
+            ["s1", "s2", "s3"], ["a1", "a2"], ["p1", "p2", "p3"],
+        )
+
+        # Check that the transition system is empty
+        self.assertEqual(len(ts1.labels), 0)
+
+        # Add a transition
+        ts1.add_label("s1", "p1")
+        ts1.add_label("s1", "p2")
+
+        # Check that the transition set has one element
+        self.assertEqual(len(ts1.labels), 2)
+        self.assertEqual(
+            ts1.L("s1"), ["p1", "p2"],
+        )
+
+    def test_transition1(self):
+        ts1 = TransitionSystem(
+            ["s1", "s2", "s3"], ["a1", "a2"], ["p1", "p2", "p3"],
+        )
+
+        # Check that the transition system is empty
+        self.assertEqual(len(ts1.labels), 0)
+
+        # Add a transition
+        ts1.add_transition("s1", "a1", "s2")
+        ts1.add_transition("s1", "a2", "s3")
+
+        # Check that the transition set has one element
+        self.assertEqual(len(ts1.transitions), 2)
+        self.assertEqual(
+            ts1.post("s1"), ["s2", "s3"],
+        )
 
 if __name__ == '__main__':
     unittest.main()
