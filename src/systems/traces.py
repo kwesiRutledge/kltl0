@@ -6,8 +6,8 @@ Description:
 
 from typing import List, Tuple, Union
 
-from kltl0.types import State, Action, AtomicProposition, Transition
-from kltl0.systems import TransitionSystem
+from src.types import State, Action, AtomicProposition, Transition
+from src.systems import TransitionSystem
 
 class Trajectory:
     def __init__(self, trajectory_string: List[Union[State, Action]], system: TransitionSystem):
@@ -24,4 +24,4 @@ class Trajectory:
             else: # Every odd entry should be an action
                 assert elt in system.Act, f"Action {elt} is not in action space!"
                 self.a += [elt]
-    
+

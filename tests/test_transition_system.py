@@ -5,7 +5,7 @@ Description:
 """
 import unittest
 
-from kltl0.systems.transition_system import (
+from src.systems.transition_system import (
     TransitionSystem,
 )
 

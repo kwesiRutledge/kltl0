@@ -8,6 +8,6 @@ Description:
 from setuptools import find_packages, setup
 
 setup(
-    name='kltl0',
+    name='src',
     packages=find_packages(),
 )
