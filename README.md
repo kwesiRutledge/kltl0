@@ -8,6 +8,7 @@ Install this package (after downloading) by running the following command in the
 ```bash
 conda create -n kltl python=3.11
 conda activate kltl
+pip install -r requirements.txt
 pip install -e .
 ```
 
