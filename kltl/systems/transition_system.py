@@ -67,5 +67,3 @@ class TransitionSystem():
 
         # Return
         return [self.AP[ap1] for (s1, ap1) in self.labels if s1 == self.S.index(s)]
-
-

@@ -1,5 +1,5 @@
 
-from kltl0.src.systems import TransitionSystem
+from kltl.systems import TransitionSystem
 
 def get_beverage_vending_machine():
     """
@@ -32,6 +32,10 @@ def get_beverage_vending_machine():
     ]
 
     # Create the transition system
-    ts = TransitionSystem(S, Act, AP, I, transitions, labels)
+    ts = TransitionSystem(S, Act, AP, I)
+    for transition in transitions:
+        ts.add_transition(*transition)
+    for label in labels:
+        ts.add_label(*label)
 
     return ts
