@@ -6,7 +6,7 @@ Description:
 
 from typing import List, Set, Tuple
 
-from src.types import State, Action, AtomicProposition, Transition
+from kltl.types import State, Action, AtomicProposition, Transition
 
 class TransitionSystem():
     S: List[State] = []
