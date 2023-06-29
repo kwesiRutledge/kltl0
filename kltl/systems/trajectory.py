@@ -7,6 +7,7 @@ Description:
 from typing import List, Tuple, Union
 import numpy as np
 
+from kltl.systems.traces import FiniteTrace, InfiniteTrace
 from kltl.types import State, Action, AtomicProposition, Transition
 from kltl.systems import TransitionSystem
 
@@ -39,7 +40,8 @@ class FiniteTrajectory:
         return len(self.states)
 
     def trace(self):
-        return [self.system.L(s) for s in self.states]
+        trace_as_list = [self.system.L(s) for s in self.states]
+        return FiniteTrace(trace_as_list, self.system)
 
 class InfiniteTrajectory:
     """
@@ -97,6 +99,11 @@ class InfiniteTrajectory:
 
     def __len__(self):
         return np.inf
+
+    def trace(self):
+        trace_prefix_as_list = [self.system.L(s) for s in self.prefix_states]
+        trace_suffix_as_list = [self.system.L(s) for s in self.suffix_states]
+        return InfiniteTrace(trace_prefix_as_list, trace_suffix_as_list, self.system)
 
 def decompose_string_into_states_and_actions(trajectory_as_string: str, system: TransitionSystem)->Tuple[List[State],List[Action]]:
     """
