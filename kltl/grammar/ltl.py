@@ -6,9 +6,7 @@ Description:
 
 from typing import List, Tuple, Union
 
-# from kltl import AtomicProposition
-
-AtomicProposition = str
+from kltl.types import AtomicProposition
 
 # Define Operators
 NextSymbol = 'X'
