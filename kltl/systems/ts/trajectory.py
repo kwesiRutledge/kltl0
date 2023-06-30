@@ -7,9 +7,9 @@ Description:
 from typing import List, Tuple, Union
 import numpy as np
 
-from kltl.systems.traces import FiniteTrace, InfiniteTrace
+from kltl.systems.ts import FiniteTrace, InfiniteTrace
 from kltl.types import State, Action, AtomicProposition, Transition
-from kltl.systems import TransitionSystem
+from kltl.systems.ts import TransitionSystem
 
 class FiniteTrajectory:
     def __init__(self, trajectory_string: List[Union[State, Action]], system: TransitionSystem):

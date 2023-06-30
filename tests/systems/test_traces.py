@@ -6,10 +6,10 @@ Description:
 
 import unittest
 
-from kltl.systems import (
-    TransitionSystem, get_beverage_vending_machine
+from kltl.systems.ts import (
+    get_beverage_vending_machine
 )
-from kltl.systems.traces import FiniteTrajectory, create_random_trajectory_with_N_actions
+from kltl.systems.ts import FiniteTrajectory, create_random_trajectory_with_N_actions
 
 class TestTraces(unittest.TestCase):
     def test_trajectory1(self):

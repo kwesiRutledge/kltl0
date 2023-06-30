@@ -7,7 +7,8 @@ Description:
 from typing import List, Tuple, Union
 from kltl.types import AtomicProposition
 
-from kltl.systems.transition_system import TransitionSystem
+from kltl.systems.ts import TransitionSystem
+from kltl.grammar.ltl import eval, LTLFormula
 
 class FiniteTrace:
     """
@@ -29,6 +30,8 @@ class FiniteTrace:
         assert idx >= 0 and idx < len(self.trace_list), f"Index {idx} is out of bounds for trace of length {len(self.trace_list)}!"
         return self.trace_list[idx]
 
+    def satisfies(self, formula: Union[AtomicProposition, LTLFormula]):
+        return eval(formula, self.trace_list)
 
 
 class InfiniteTrace:
