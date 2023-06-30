@@ -9,3 +9,5 @@ StateIndex = int
 ActionIndex = int
 AtomicPropositionIndex = int
 Transition = Tuple[StateIndex, ActionIndex, StateIndex]
+
+Output = str
