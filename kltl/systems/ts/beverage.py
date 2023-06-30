@@ -1,5 +1,5 @@
 
-from kltl.systems import TransitionSystem
+from kltl.systems.ts import TransitionSystem
 
 def get_beverage_vending_machine():
     """
