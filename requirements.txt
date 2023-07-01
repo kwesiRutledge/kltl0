@@ -1,2 +1,5 @@
 # Math Stuff
 numpy
+
+# Plotting
+matplotlib
