@@ -62,19 +62,31 @@ class ParametricTransitionSystem:
         assert a in self.Act
 
         self.transitions += [(self.S.index(s1), self.Act.index(a), self.Theta.index(theta), self.S.index(s2))]
+        self.transitions = list(set(self.transitions))
 
     def add_label(self, s: State, ap: AtomicProposition):
         assert s in self.S, f" State {s} is not in state space!"
         assert ap in self.AP, f"Proposition {ap} is not in atomic proposition space!"
 
         self.labels += [(self.S.index(s), self.AP.index(ap))]
+        self.labels = list(set(self.labels))
 
     def add_output(self, s: State, theta: Parameter, o: Output):
+        """
+        add_output
+        Description:
+            Adds output to the transition system (if it doesn't already exist).
+        :param s:
+        :param theta:
+        :param o:
+        :return:
+        """
         assert s in self.S, f" State {s} is not in state space!"
         assert theta in self.Theta, f"Parameter {theta} is not in parameter space!"
         assert o in self.Y, f" Output {o} is not in the output space!"
 
         self.output_map += [(self.S.index(s), self.Theta.index(theta), self.Y.index(o))]
+        self.output_map = list(set(self.output_map))
 
     def post(self, s: State, a: Action = None, theta: Parameter = None) -> List[State]:
         assert s in self.S, f"State {s} is not in state space!"
