@@ -4,7 +4,7 @@ Description:
     This file makes it easy to create your own version of Sadra Sadradinni's Parametric Transition System example from his
     "Formal methods for adaptive control of dynamical systems" paper.
 """
-from kltl.systems.pts import ParametricTransitionSystem
+from kltl.systems.pts import ParametricTransitionSystem, FiniteTrajectory
 
 from typing import Tuple
 from kltl.types import State
@@ -30,7 +30,7 @@ class SadraSystem(ParametricTransitionSystem):
         Theta = ["-2", "-1", "0", "1", "2"]
 
         # Initial State set
-        I = [f"s_({n_rows - 1}, {n_cols - 2})"]
+        I = [f"s_({n_rows - 1},{n_cols - 2})"]
 
         super().__init__(S, Act, AP, I=I, Y=Y, Theta=Theta)
 
@@ -150,7 +150,7 @@ class SadraSystem(ParametricTransitionSystem):
                 in_windy_region = (self.windy_region_y_lb <= row_idx) and (row_idx <= self.windy_region_y_ub)
                 color = "blue" if in_windy_region else "black"
                 s_i_square = Rectangle(
-                    (col_idx * square_sl - square_sl/2., -row_idx*square_sl - square_sl/2.),
+                    (col_idx * square_sl - square_sl/2., row_idx*square_sl - square_sl/2.),
                     square_sl, square_sl,
                     fill=True,
                     alpha=0.5,
@@ -158,7 +158,39 @@ class SadraSystem(ParametricTransitionSystem):
                 )
                 ax.add_patch(s_i_square)
 
+    def plot_trajectory(self, traj: FiniteTrajectory, ax=None):
+        """
+        plot_trajectory
+        Description:
+            Plots the trajectory provided in traj.
+        :param traj:
+        :param ax:
+        :return: Returns an axis object/figure where the
+        """
+        # Input Processing
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.subplots(1, 1, 1)
 
+        # Constants
+        square_sl = 1.0
+        circle_radius = square_sl / 4.0
+
+        # Plot the grid of state spaces
+        self.plot_environment(ax, square_sl=square_sl)
+
+        # Plot trajectory
+        for k in range(len(traj)):
+            print(k)
+            s_k = traj.s(k)
+            row_idx, col_idx = self.state_name_to_coordinates(s_k)
+            curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
+            print(curr_state_circle)
+            ax.add_patch(curr_state_circle)
+
+        # Set Axis
+        ax.set_xlim([-square_sl, self.n_cols * square_sl])
+        ax.set_ylim([- square_sl, self.n_rows * square_sl])
 
 def get_sadra_system():
     """Gets sadra system."""
