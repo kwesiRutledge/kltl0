@@ -7,7 +7,7 @@ Description:
 from typing import List, Tuple, Union
 import numpy as np
 
-from kltl.systems.pts.traces import FiniteTrace, InfiniteTrace
+from kltl.systems.ts.traces import FiniteTrace, InfiniteTrace
 from kltl.types import State, Action, AtomicProposition, Transition, Output
 from kltl.systems.pts.pts_types import Parameter
 from kltl.systems.pts import ParametricTransitionSystem
