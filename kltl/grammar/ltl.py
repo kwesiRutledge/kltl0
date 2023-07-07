@@ -123,6 +123,12 @@ function_map = {
     
 }
 
+def eval(phi, trace_in):
+        if type(phi) == str:
+            return evaluate(LTLFormula(phi, []), trace_in)
+        if type(phi) != str:
+            return evaluate(phi, trace_in)
+
 def evaluate(formula_in:LTLFormula, trace_in:List[List[str]]):
     
     ap_or_op = formula_in.ap_or_operator
@@ -142,8 +148,3 @@ def evaluate(formula_in:LTLFormula, trace_in:List[List[str]]):
     elif ap_or_op in Symbols and sub != []:
         return function_map[ap_or_op](formula_in, trace_in)
     
-def eval(phi, trace_in):
-        if type(phi) == str:
-            return evaluate(LTLFormula(phi, []), trace_in)
-        if type(phi) != str:
-            return evaluate(phi, trace_in)
