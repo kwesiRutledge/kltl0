@@ -59,6 +59,15 @@ class FiniteTrajectory:
         trace_as_list = [self.system.L(s) for s in self.states]
         return FiniteTrace(trace_as_list, self.system)
 
+    def __str__(self):
+        traj_as_str = ""
+        for k in range(len(self)-1):
+            traj_as_str += self.s(k) + " , "
+            traj_as_str += self.y(k) + " , "
+            traj_as_str += self.a(k) + " , "
+        traj_as_str += self.s(len(self)-1) + " , " + self.y(len(self)-1)
+        return traj_as_str
+
 
 class InfiniteTrajectory:
     """
@@ -207,9 +216,9 @@ def create_random_trajectory_with_N_actions(sys: ParametricTransitionSystem, N: 
     """
 
     # Select an initial condition
-    s0 = np.random.choice(sys.I, 1)
-    theta = np.random.choice(sys.Theta, 1)
-    y0 = np.random.choice(sys.O(s, theta), 1)
+    s0 = np.random.choice(sys.I, 1)[0]
+    theta = np.random.choice(sys.Theta, 1)[0]
+    y0 = np.random.choice(sys.O(s0, theta), 1)[0]
 
     s_i, y_i = s0, y0
     trajectory_as_list = [s0, y0]
@@ -228,4 +237,4 @@ def create_random_trajectory_with_N_actions(sys: ParametricTransitionSystem, N: 
         # Update
         s_i = s_ip1
 
-    return FiniteTrajectory(trajectory_as_list, sys)
+    return FiniteTrajectory(trajectory_as_list, theta, sys)

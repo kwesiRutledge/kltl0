@@ -8,7 +8,7 @@ from typing import List, Tuple, Union
 from kltl.types import AtomicProposition
 
 from kltl.systems.ts import TransitionSystem
-from kltl.grammar.ltl import eval, LTLFormula
+from kltl.grammar.ltl import evaluate, LTLFormula
 
 class FiniteTrace:
     """
@@ -31,7 +31,7 @@ class FiniteTrace:
         return self.trace_list[idx]
 
     def satisfies(self, formula: Union[AtomicProposition, LTLFormula]):
-        return eval(formula, self.trace_list)
+        return evaluate(formula, self.trace_list)
 
 
 class InfiniteTrace:

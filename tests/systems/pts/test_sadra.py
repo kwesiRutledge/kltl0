@@ -10,6 +10,9 @@ from kltl.systems.pts.sadra import get_sadra_system
 
 import matplotlib.pyplot as plt
 
+from kltl.systems.pts.trajectory import create_random_trajectory_with_N_actions
+
+
 class TestSadra(unittest.TestCase):
     def test_get_sadra_system1(self):
         """
@@ -41,7 +44,18 @@ class TestSadra(unittest.TestCase):
         os.makedirs("figures", exist_ok=True)
         fig.savefig("figures/sadra_plot1.png")
 
+    def test_plot_trajectory1(self):
+        # Constants
+        sadra = get_sadra_system()
 
+        # Sample Trajectory
+        traj0 = create_random_trajectory_with_N_actions(sadra, 10)
+
+        fig, ax = plt.subplots(1, 1)
+        sadra.plot_trajectory(traj0, ax=ax)
+
+        os.makedirs("figures", exist_ok=True)
+        fig.savefig("figures/sadra_plot_trajectory1.png")
 
 
 if __name__ == '__main__':
