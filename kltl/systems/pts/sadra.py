@@ -4,14 +4,17 @@ Description:
     This file makes it easy to create your own version of Sadra Sadradinni's Parametric Transition System example from his
     "Formal methods for adaptive control of dynamical systems" paper.
 """
+import numpy as np
+
 from kltl.systems.pts import ParametricTransitionSystem, FiniteTrajectory
 
-from typing import Tuple
+from typing import Tuple, Dict, Any
 from kltl.types import State
 from kltl.systems.pts.pts_types import Parameter
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Circle
+import matplotlib.animation as manimation
 
 class SadraSystem(ParametricTransitionSystem):
     def __init__(self, n_cols: int = 15, n_rows: int = 10, windy_region_y_lb: int = 3, windy_region_y_ub: int = 6):
@@ -30,7 +33,7 @@ class SadraSystem(ParametricTransitionSystem):
         Theta = ["-2", "-1", "0", "1", "2"]
 
         # Initial State set
-        I = [f"s_({n_rows - 1},{n_cols - 2})"]
+        I = [f"s_(0,{n_cols - 5})"]
 
         super().__init__(S, Act, AP, I=I, Y=Y, Theta=Theta)
 
@@ -51,8 +54,8 @@ class SadraSystem(ParametricTransitionSystem):
                     self.add_output(f"s_({row_idx},{col_idx})", theta, f"s_({row_idx},{col_idx})")
 
         # Label Two regions as important recon points
-        self.add_label(f"s_(0,3)", "Surveil1")
-        self.add_label(f"s_({n_rows-1},9)", "Surveil2")
+        self.add_label(f"s_(0,{n_cols-3})", "Surveil1")
+        self.add_label(f"s_({n_rows-1},2)", "Surveil2")
 
     def clamp_col(self, col_index: int) -> int:
         return max(0, min(col_index, self.n_cols-1))
@@ -110,8 +113,7 @@ class SadraSystem(ParametricTransitionSystem):
 
         return row_idx, col_idx
 
-
-    def plot(self, state: State = None, ax=None):
+    def plot(self, state: State = None, ax=None)->Dict[str, Any]:
         """
 
         :param ax: Axes to plot things on if one doesn't already exist.
@@ -135,11 +137,13 @@ class SadraSystem(ParametricTransitionSystem):
         if state is not None:
             row_idx, col_idx = self.state_name_to_coordinates(state)
             curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
-            ax.add_patch(curr_state_circle)
+            robot_patch = ax.add_patch(curr_state_circle)
 
         # Set Axis
         ax.set_xlim([-square_sl, self.n_cols * square_sl])
-        ax.set_ylim([- self.n_rows * square_sl, square_sl])
+        ax.set_ylim([- square_sl, self.n_rows * square_sl])
+
+        return {"robot": robot_patch}
 
     def plot_environment(self, ax: plt.Axes, square_sl: float = 1.0):
         # Constants
@@ -147,8 +151,16 @@ class SadraSystem(ParametricTransitionSystem):
         # Algorithm
         for row_idx in range(self.n_rows):
             for col_idx in range(self.n_cols):
+                state_name = f"s_({row_idx},{col_idx})"
+
                 in_windy_region = (self.windy_region_y_lb <= row_idx) and (row_idx <= self.windy_region_y_ub)
+                in_lava_region = (col_idx == 0) or (col_idx == self.n_cols - 1)
+
                 color = "blue" if in_windy_region else "black"
+                color = "red" if in_lava_region else color
+                color = "green" if ("Surveil1" in self.L(state_name)) or ("Surveil2" in self.L(state_name)) else color
+                color = "yellow" if state_name in self.I else color
+
                 s_i_square = Rectangle(
                     (col_idx * square_sl - square_sl/2., row_idx*square_sl - square_sl/2.),
                     square_sl, square_sl,
@@ -181,16 +193,48 @@ class SadraSystem(ParametricTransitionSystem):
 
         # Plot trajectory
         for k in range(len(traj)):
-            print(k)
             s_k = traj.s(k)
             row_idx, col_idx = self.state_name_to_coordinates(s_k)
             curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
-            print(curr_state_circle)
             ax.add_patch(curr_state_circle)
 
         # Set Axis
         ax.set_xlim([-square_sl, self.n_cols * square_sl])
         ax.set_ylim([- square_sl, self.n_rows * square_sl])
+
+    def save_animated_trajectory(self, traj: FiniteTrajectory, filename: str, ax=None, fps: int = 2):
+        """
+        save_animated_trajectory
+        Description:
+            Creates a gif or video of the target trajectory.
+        :param traj:
+        :param filename: Filename to save the animation to.
+        :param ax:
+        :return:
+        """
+        # Constants
+        num_frames = len(traj)
+
+        # Create a figure and an axis.
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        # Plot the initial state.
+        plot_objects = self.plot(state=traj.s(0), ax=ax)
+
+        # Create a function to update the plot.
+        def update(frame_index):
+            # Update robot position
+            plot_objects["robot"].center = np.flip(self.state_name_to_coordinates(traj.s(frame_index)))
+
+        # Construct the animation, using the update function as the animation
+        # director.
+        animation = manimation.FuncAnimation(
+            fig, update,
+            np.arange(0, num_frames - 1),
+        )
+
+        animation.save(filename=filename, fps=fps)
 
 def get_sadra_system():
     """Gets sadra system."""
