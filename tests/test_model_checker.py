@@ -6,7 +6,7 @@ Description:
 
 """
 
-from kltl.grammar.ltl import And, Or, Next, Always, Until, Eventually, evaluate
+from kltl.grammar.ltl_semantics import And, Or, Next, Always, Until, Eventually, evaluate
 
 """ Test Cases """
 

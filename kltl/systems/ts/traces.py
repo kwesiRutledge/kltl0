@@ -8,7 +8,7 @@ from typing import List, Tuple, Union
 from kltl.types import AtomicProposition
 
 from kltl.systems.ts import TransitionSystem
-from kltl.grammar.ltl import evaluate, LTLFormula
+from kltl.grammar.ltl_semantics import evaluate, LTLFormula
 
 class FiniteTrace:
     """

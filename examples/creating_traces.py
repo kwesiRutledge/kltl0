@@ -1,5 +1,5 @@
 from kltl.systems.ts import get_beverage_vending_machine, create_random_trajectory_with_N_actions
-from kltl.grammar.ltl import Eventually
+from kltl.grammar.ltl_semantics import Eventually
 
 # Create Beverage Vending Machine
 ts = get_beverage_vending_machine()
