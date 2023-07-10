@@ -10,8 +10,6 @@ from kltl.types import AtomicProposition
 
 from kltl.systems.pts.parametric_transition_system import ParametricTransitionSystem
 
-from itertools import chain, combinations 
-
 # Define Operators
 NextSymbol = 'X'
 UntilSymbol = 'U'
