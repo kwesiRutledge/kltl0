@@ -15,6 +15,7 @@ AlwaysSymbol = 'G'
 EventuallySymbol = 'F'
 AndSymbol = 'A'
 OrSymbol = 'O'
+NotSymbol = 'N'
 
 Symbols = [NextSymbol, UntilSymbol, AlwaysSymbol, EventuallySymbol, AndSymbol, OrSymbol] # Could make this/symbol declarations a dictionary
 
@@ -112,6 +113,10 @@ def satisfies_or(formula_in:LTLFormula, trace_in:List[List[str]]):
         if eval(phi, trace_in): return True
     return False
 
+def satisfies_not(formula_in:LTLFormula, trace_in:List[List[str]]):
+    assert formula_in.ap_or_operator == NotSymbol, 'LTL formula must begin with "Not" operator to check for satisfaction thereof'
+    return not eval(formula_in, trace_in)
+
 function_map = {
     
     # NextSymbol:satisfies_next,
@@ -119,10 +124,12 @@ function_map = {
     AlwaysSymbol:satisfies_always,
     EventuallySymbol:satisfies_eventually,
     AndSymbol:satisfies_and,
-    OrSymbol:satisfies_or
+    OrSymbol:satisfies_or,
+    NotSymbol:satisfies_not
     
 }
 
+# The "eval" method is an internal method.
 def eval(phi, trace_in):
         if type(phi) == str:
             return evaluate(LTLFormula(phi, []), trace_in)

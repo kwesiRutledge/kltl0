@@ -10,8 +10,6 @@ from kltl.types import AtomicProposition
 
 from kltl.systems.pts.parametric_transition_system import ParametricTransitionSystem
 
-from itertools import chain, combinations 
-
 # Define Operators
 NextSymbol = 'X'
 UntilSymbol = 'U'
@@ -123,6 +121,7 @@ def satisfies_or(formula_in:KLTLFormula, trace_in:List[List[str]], system_in:Par
     return False
 
 def satisfies_not(formula_in:KLTLFormula, trace_in:List[List[str]], system_in:ParametricTransitionSystem):
+    assert formula_in.ap_or_operator == NotSymbol, 'KLTL formula must begin with "Not" operator to check for satisfaction thereof'
     return not eval(formula_in, trace_in)
 
 def satisfies_knows(formula_in:KLTLFormula, trace_in:List[List[str]], system_in:ParametricTransitionSystem):
@@ -162,8 +161,7 @@ function_map = {
     
 }
 
-######################## Update below
-
+# The "eval" method is an internal method.
 def eval(phi, trace_in, system_in:ParametricTransitionSystem):
         if type(phi) == str:
             return kltl_evaluate(KLTLFormula(phi, []), trace_in, system_in)
