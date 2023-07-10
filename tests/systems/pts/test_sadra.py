@@ -10,6 +10,9 @@ from kltl.systems.pts.sadra import get_sadra_system
 
 import matplotlib.pyplot as plt
 
+from kltl.systems.pts.trajectory import create_random_trajectory_with_N_actions
+
+
 class TestSadra(unittest.TestCase):
     def test_get_sadra_system1(self):
         """
@@ -27,8 +30,8 @@ class TestSadra(unittest.TestCase):
         )
 
         for s_i in sadra.S:
-            self.assertTrue(s_i == sadra.O(s_i, "Windy")[0])
-            self.assertTrue(s_i == sadra.O(s_i, "NoWind")[0])
+            self.assertTrue(s_i == sadra.O(s_i, "1")[0])
+            self.assertTrue(s_i == sadra.O(s_i, "0")[0])
 
     def test_plot1(self):
         """test plotting function first"""
@@ -41,7 +44,32 @@ class TestSadra(unittest.TestCase):
         os.makedirs("figures", exist_ok=True)
         fig.savefig("figures/sadra_plot1.png")
 
+    def test_plot_trajectory1(self):
+        # Constants
+        sadra = get_sadra_system()
 
+        # Sample Trajectory
+        traj0 = create_random_trajectory_with_N_actions(sadra, 10)
+
+        fig, ax = plt.subplots(1, 1)
+        sadra.plot_trajectory(traj0, ax=ax)
+
+        os.makedirs("figures", exist_ok=True)
+        fig.savefig("figures/sadra_plot_trajectory1.png")
+
+    def test_save_animated_trajectory1(self):
+        # Constants
+        sadra = get_sadra_system()
+        filename = "figures/sadra_animated_trajectory1.gif"
+
+        # Create
+        os.makedirs("figures", exist_ok=True)
+
+        # Sample Trajectory
+        traj0 = create_random_trajectory_with_N_actions(sadra, 10)
+
+        fig, ax = plt.subplots(1, 1)
+        sadra.save_animated_trajectory(traj0, filename, ax=ax)
 
 
 if __name__ == '__main__':
