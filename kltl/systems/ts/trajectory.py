@@ -33,7 +33,7 @@ class FiniteTrajectory:
         :return:
         """
         assert (action_idx >= 0) and (action_idx < len(self.actions)), \
-            f"There are only {len(self.actions)} actions, but user tried to access {state_idx} action!"
+            f"There are only {len(self.actions)} actions, but user tried to access {action_idx} action!"
         return self.actions[action_idx]
 
     def __len__(self):

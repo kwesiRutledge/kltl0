@@ -41,7 +41,7 @@ class SadraSystem(ParametricTransitionSystem):
         for row_idx in range(n_rows):
             for col_idx in range(n_cols):
                 for theta in self.Theta:
-                    if (row_idx > windy_region_y_lb) and (row_idx < windy_region_y_ub):
+                    if (row_idx >= windy_region_y_lb) and (row_idx <= windy_region_y_ub):
                         self.add_transitions_for_shift(theta, (row_idx, col_idx))
                     else:
                         add_standard_transitions_for_mode(self, theta, (row_idx, col_idx), n_rows, n_cols)
