@@ -4,21 +4,30 @@ Description:
     A module for the finding the possible trajectories given the control policies of a parametric transition system.
 """
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import numpy as np
+
+from kltl.systems import TransitionSystem
 from kltl.systems.pts.trajectory import create_random_trajectory_with_N_actions
 from kltl.systems.pts.sadra import get_sadra_system
 from kltl.systems.pts.parametric_transition_system import ParametricTransitionSystem
 
 class ControlPolicies:
-    def __init__(self, test_num=1):
+    def __init__(self, test_num=1, system: Union[TransitionSystem, ParametricTransitionSystem] = None):
         self.tested = 0
         self.entered = False
         self.test_num = test_num
+
+        if system is None:
+            self.system = get_sadra_system()
+        else:
+            self.system = system
+
         
     def find(self, transitions: List[Tuple], dir: str):
-        # IDE raises error due to early reference of object 'sadra', but can still run code as this function is only called after object is declared.
-        return next(transition for transition in transitions if sadra.Act[transition[1]] == dir)
+        # Constants
+        system = self.system
+        return next(transition for transition in transitions if system.Act[transition[1]] == dir)
         
     def control_policy_1(self, trajectory: List[str], theta=-1):
         sadra = get_sadra_system()

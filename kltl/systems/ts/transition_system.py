@@ -8,22 +8,23 @@ from typing import List, Set, Tuple
 
 from kltl.types import State, Action, AtomicProposition, Transition
 
-class TransitionSystem():
-    S: List[State] = []
-    I: List[State] = []
-    Act: List[Action] = []
-    transitions: List[Transition] = []
-    AP: List[AtomicProposition] = []
-    labels: List[Tuple[State, AtomicProposition]] = []
-
+class TransitionSystem(object):
     def __init__(
             self,
             S: List[State], Act: List[Action], AP: List[AtomicProposition],
-            I: List[State] = [],
-            transitions: List[Transition] = [], labels: List[Tuple[State, AtomicProposition]] = [],
+            I: List[State] = None,
+            transitions: List[Transition] = None,
+            labels: List[Tuple[State, AtomicProposition]] = None,
     ):
         # Input Processing
         assert len(S) > 0
+
+        if I is None:
+            I = []
+        if transitions is None:
+            transitions = []
+        if labels is None:
+            labels = []
 
         self.S = S
         self.Act = Act
@@ -43,6 +44,9 @@ class TransitionSystem():
         assert s in self.S, f" State {s} is not in state space!"
         assert ap in self.AP, f"Proposition {ap} is not in atomic proposition space!"
 
+        print("self.S.index(s)", self.S.index(s))
+        print("self.AP.index(ap)", self.AP.index(ap))
+        print(self.labels)
         self.labels += [(self.S.index(s), self.AP.index(ap))]
 
     def post(self, s: State, a: Action = None) -> List[State]:
