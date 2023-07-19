@@ -1,8 +1,15 @@
 name: Workflow for Codecov
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+    pull_request:
+      branches: [ main ]
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
 jobs:
   run:
     runs-on: ubuntu-latest
+    name: Run tests and collect coverage
     steps:
       - name: Checkout
         uses: actions/checkout@v3
