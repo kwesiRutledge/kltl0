@@ -1,3 +1,4 @@
+[![codecov](https://codecov.io/gh/kwesiRutledge/kltl0/branch/main/graph/badge.svg?token=GSH9341KXL)](https://codecov.io/gh/kwesiRutledge/kltl0)
 # kltl0
 A set of experiments used to perform design of control algorithms for the temporal logic KLTL.
 
