@@ -165,3 +165,4 @@ extras/venvs/*
 
 # Test figures
 **/figures/*.png
+**/figures/*.gif

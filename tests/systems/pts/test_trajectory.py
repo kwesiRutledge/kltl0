@@ -18,3 +18,7 @@ class TestTrajectory(unittest.TestCase):
             Tests that we can retrieve the proper outputs out of an infinite trajectory object.
         :return:
         """
+        pass
+
+if __name__ == '__main__':
+    unittest.main()
