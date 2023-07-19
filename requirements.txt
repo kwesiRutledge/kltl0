@@ -3,3 +3,7 @@ numpy
 
 # Plotting
 matplotlib
+
+# Testing
+pytest
+pytest-cov

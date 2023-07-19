@@ -30,7 +30,7 @@ formula_2 = And(sub_2a, sub_2b, sub_2c, sub_2d, sub_2e)
 
 print('Evaluation of formula 1 with trace 1: ', evaluate(formula_1, traces[1])) # Should evaluate to False
 
-for i in range(2,6):
+for i in range(2, 6):
     print(f'Evaluation of formula 2 with trace {i}: ', evaluate(formula_2, traces[i])) 
     
     # Should evaluate to True, False, False, True
