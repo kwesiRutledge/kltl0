@@ -9,8 +9,9 @@ import numpy as np
 
 from kltl.systems import TransitionSystem
 from kltl.systems.pts.trajectory import create_random_trajectory_with_N_actions
-from kltl.systems.pts.sadra import get_sadra_system
+from kltl.systems.pts.sadra_noise import get_sadra_system
 from kltl.systems.pts.parametric_transition_system import ParametricTransitionSystem
+from random import choice
 
 class ControlPolicies:
     def __init__(self, test_num=1, system: Union[TransitionSystem, ParametricTransitionSystem] = None):
@@ -27,10 +28,11 @@ class ControlPolicies:
     def find(self, transitions: List[Tuple], dir: str):
         # Constants
         system = self.system
-        return next(transition for transition in transitions if system.Act[transition[1]] == dir)
+        potential = [transition for transition in transitions if system.Act[transition[1]] == dir]
+        return choice(potential)
         
     def control_policy_1(self, trajectory: List[str], theta=-1):
-        sadra = get_sadra_system()
+        sadra = self.system
         coord = sadra.state_name_to_coordinates
         r_idx, c_idx = coord(trajectory[-1])
         (goal1, _), (goal2, _) = sadra.labels
@@ -112,19 +114,19 @@ class ControlPolicies:
             for i in range(0,len(trajectory)-3, 3):
                 if coord(trajectory[i+1])[0] <= sadra.windy_region_y_ub and coord(trajectory[i+1])[0] >= sadra.windy_region_y_lb:
                     transition = trajectory[i+2]
-                    if transition not in actions: actions[transition] = coord(trajectory[i+4])[1] - coord(trajectory[i+1])[1]
+                    if transition not in actions: actions[transition] = [coord(trajectory[i+4])[1] - coord(trajectory[i+1])[1]]
                     else: actions[transition].append(coord(trajectory[i+4])[1] - coord(trajectory[i+1])[1])
                     
-            for action in actions:
-                actions[action] = np.array(actions[action])
+            for action in actions: actions[action] = np.array(actions[action])
                 
             if 'left' in actions: actions['left'] = actions['left'] + 1
             if 'right' in actions: actions['right'] = actions['right'] - 1
-            
+            for action in actions: actions[action] = list(actions[action])
+                    
             if -2 in actions.values(): theta = -2
             elif 2 in actions.values(): theta = 2 
             elif dict != {} and theta == 0: 
-                avg = (np.mean(actions['up']) + np.mean(actions['down']) + np.mean(actions['left']) + np.mean(actions['right']))/4
+                avg = sum(np.mean(actions[i]) for i in actions)/len(actions)
                 if avg > 0: avg = round(avg)
                 if avg < 0: avg = -round(-avg)
                 theta = avg
@@ -136,6 +138,8 @@ def get_all_trajectories(policy, max_len: int, pts: ParametricTransitionSystem):
     trajs = [[y0, y0] for y0 in pts.I]
     for i in range(max_len):
         for traj in trajs:
-            traj.extend(policy(traj))
+            next = policy(traj)
+            if next != None: traj.extend(next)
+            else: print("Goals reached.")
     return trajs
         
