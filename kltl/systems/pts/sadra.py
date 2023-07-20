@@ -85,16 +85,16 @@ class SadraSystem(ParametricTransitionSystem):
         s_i = f"s_({state_coords[0]},{state_coords[1]})"
 
         # Add Transitions
-        s_i_up = f"s_({self.clamp_row(state_coords[0] - 1)},{self.clamp_col(state_coords[1] - shift)})"
+        s_i_up = f"s_({self.clamp_row(state_coords[0] - 1)},{self.clamp_col(state_coords[1] + shift)})"
         self.add_transition(s_i, "up", theta, s_i_up)
 
-        s_i_down = f"s_({self.clamp_row(state_coords[0] + 1)},{self.clamp_col(state_coords[1] - shift)})"
+        s_i_down = f"s_({self.clamp_row(state_coords[0] + 1)},{self.clamp_col(state_coords[1] + shift)})"
         self.add_transition(s_i, "down", theta, s_i_down)
 
-        s_i_left = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift - 1)})"
+        s_i_left = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] + shift - 1)})"
         self.add_transition(s_i, "left", theta, s_i_left)
 
-        s_i_right = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift + 1)})"
+        s_i_right = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] + shift + 1)})"
         self.add_transition(s_i, "right", theta, s_i_right)
 
     def state_name_to_coordinates(self, state: State)->Tuple[int, int]:
@@ -264,11 +264,11 @@ def add_standard_transitions_for_mode(
 
     # Add Transitions
     if state_coords[0] != 0:  # If current state is at the top of the space, it can not move north
-        s_i_next = f"s_({state_coords[0]-1},{state_coords[1]})"
+        s_i_next = f"s_({ts.clamp_row(state_coords[0]+1)},{state_coords[1]})"
         ts.add_transition(s_i, "up", theta, s_i_next)
 
     if state_coords[0] != n_rows - 1:  # If current state is a the bottom of the space, it can not move south.
-        s_i_next = f"s_({state_coords[0]+1},{state_coords[1]})"
+        s_i_next = f"s_({ts.clamp_row(state_coords[0]-1)},{state_coords[1]})"
         ts.add_transition(s_i, "down", theta, s_i_next)
 
     if state_coords[1] != 0:  # If the current state is at the left of the space, it can not move west (left).

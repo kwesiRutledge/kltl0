@@ -15,30 +15,33 @@ class ParametricTransitionSystem:
     Description:
         A class representing a parametric transition system.
     """
-    S: List[State] = []
-    I: List[State] = []
-    Act: List[Action] = []
-    Theta: List[Parameter] = []
-    transitions: List[Transition] = []
-    AP: List[AtomicProposition] = []
-    labels: List[Tuple[State, AtomicProposition]] = []
-    Y: List[Output] = []
-    output_map: List[Tuple[State, Output]] = []
-
     def __init__(
             self,
             S: List[State],
             Act: List[Action],
             AP: List[AtomicProposition],
-            I: List[State] = [],
-            Y: List[Output] = [],
-            Theta: List[Parameter] = [],
-            transitions: List[Transition] = [],
-            labels: List[Tuple[State, AtomicProposition]] = [],
-            output_map: List[Tuple[State, Parameter, Output]] = [],
+            I: List[State] = None,
+            Y: List[Output] = None,
+            Theta: List[Parameter] = None,
+            transitions: List[Transition] = None,
+            labels: List[Tuple[State, AtomicProposition]] = None,
+            output_map: List[Tuple[State, Parameter, Output]] = None,
     ):
         # Input Processing
         assert len(S) > 0
+
+        if I is None:
+            I = []
+        if Y is None:
+            Y = []
+        if Theta is None:
+            Theta = []
+        if transitions is None:
+            transitions = []
+        if labels is None:
+            labels = []
+        if output_map is None:
+            output_map = []
 
         self.S = S
         self.Act = Act
