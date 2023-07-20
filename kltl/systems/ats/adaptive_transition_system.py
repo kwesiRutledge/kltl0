@@ -14,7 +14,7 @@ class AdaptiveTransitionSystem(object):
             self,
             S: List[ATSState], Act: List[Action], AP: List[AtomicProposition],
             I: List[ATSState] = None,
-            transitions: List[Transition] = None,
+            transitions: List[ATSTransition] = None,
             labels: List[Tuple[ATSState, AtomicProposition]] = None,
     ):
         # Input Processing
