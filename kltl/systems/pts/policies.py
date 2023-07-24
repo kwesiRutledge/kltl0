@@ -14,10 +14,11 @@ from kltl.systems.pts.parametric_transition_system import ParametricTransitionSy
 from random import choice
 
 class ControlPolicies:
-    def __init__(self, test_num=1, system: Union[TransitionSystem, ParametricTransitionSystem] = None):
+    def __init__(self, theta: int, test_num=1, system: Union[TransitionSystem, ParametricTransitionSystem] = None):
         self.tested = 0
         self.entered = False
         self.test_num = test_num
+        self.theta = theta
 
         if system is None:
             self.system = get_sadra_system()
@@ -28,7 +29,7 @@ class ControlPolicies:
     def find(self, transitions: List[Tuple], dir: str):
         # Constants
         system = self.system
-        potential = [transition for transition in transitions if system.Act[transition[1]] == dir]
+        potential = [transition for transition in transitions if system.Act[transition[1]] == dir and system.Theta[transition[2] == self.theta]]
         return choice(potential)
         
     def control_policy_1(self, trajectory: List[str], theta=-1):
