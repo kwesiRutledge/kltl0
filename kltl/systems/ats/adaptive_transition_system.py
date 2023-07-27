@@ -45,9 +45,6 @@ class AdaptiveTransitionSystem(object):
         assert s in self.S, f" ATSState {s} is not in state space!"
         assert ap in self.AP, f"Proposition {ap} is not in atomic proposition space!"
 
-        print("self.S.index(s)", self.S.index(s))
-        print("self.AP.index(ap)", self.AP.index(ap))
-        print(self.labels)
         self.labels += [(self.S.index(s), self.AP.index(ap))]
 
     def post(self, s: ATSState, a: Action = None) -> List[ATSState]:
