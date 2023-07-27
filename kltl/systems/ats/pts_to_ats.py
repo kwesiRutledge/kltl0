@@ -20,34 +20,38 @@ def pts2ats(system: ParametricTransitionSystem) -> AdaptiveTransitionSystem:
     # Constants
     U = system.Act
 
-    # Construct new X
-    X_adp_new = [ (x, system.Theta) for x in system.X ]
-    X_adp = X_adp_new
+    # Construct new S
+    S_adp_new = [(s, system.Theta) for s in system.S]
+    S_adp = S_adp_new
 
-    # Loop until X_adp_new is empty
-    while len(X_adp_new) > 0:
-        X_adp_new = []
-        for (x, eta) in X_adp:
+    # Loop until S_adp_new is empty
+    while len(S_adp_new) > 0:
+        S_adp_new = []
+        for (s, eta) in S_adp:
             for u in U:
                 gamma_xeta_u = []
                 eta_prime = []
-                succ_tuples = collect_all_successors_that_can_follow_from(system, x, eta, u)
+                succ_tuples = collect_all_successors_that_can_follow_from(system, s, eta, u)
 
-                # Add the novel states to X_adp
+                if len(S_adp) > 14:
+                    print(S_adp)
+                    exit(1)
+
+                # Add the novel states to S_adp
                 for (x_prime, eta_prime) in succ_tuples:
-                    if (x_prime, eta_prime) not in X_adp:
-                        X_adp_new.append((x_prime, eta_prime))
-                        X_adp.append((x_prime, eta_prime))
+                    if (x_prime, eta_prime) not in S_adp:
+                        S_adp_new.append((x_prime, eta_prime))
+                        S_adp.append((x_prime, eta_prime))
 
-    # When done create system using X_adp
+    # When done create system using S_adp
     ats_out = AdaptiveTransitionSystem(
-        X_adp, system.Act, system.AP,
-        I=[(x, system.Theta) for x in system.I],
+        S_adp, system.Act, system.AP,
+        I=[(s, system.Theta) for s in system.I],
     )
 
     # Add outputs for each state
-    for (x, eta) in X_adp:
-        ats_out.add_label((x, eta), system.L(x))
+    for (s, eta) in S_adp:
+        ats_out.add_label((s, eta), system.L(x))
 
     return ats_out
 

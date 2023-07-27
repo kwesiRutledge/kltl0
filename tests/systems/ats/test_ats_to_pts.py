@@ -7,10 +7,9 @@ import unittest
 
 import numpy as np
 
-from kltl.systems.ats.pts_to_ats import collect_all_successors_that_can_follow_from
+from kltl.systems.ats.pts_to_ats import collect_all_successors_that_can_follow_from, pts2ats
 from kltl.systems.pts.sadra import get_sadra_system
-from kltl.systems.pts.sadra_noise import SadraSystem
-
+import kltl.systems.pts.sadra_noise as sadra_noise
 
 class TestPTS2ATS(unittest.TestCase):
     def test_collect_all_successors_that_can_follow_from1(self):
@@ -48,7 +47,22 @@ class TestPTS2ATS(unittest.TestCase):
 
         # print(succ1)
 
-        pass
+    def test_pts2ats1(self):
+        """
+        test_pts2ats1
+        Description:
+            Tests that the PTS2ATS function works correctly by using it on the Sadra system.
+        :return:
+        """
+        # Constants
+        system = sadra_noise.get_sadra_system()
+
+        # Algorithm
+        ats = pts2ats(system)
+
+        print(ats.S)
+
+        self.assertGreaterEqual(len(ats.transitions), 0)
 
 if __name__ == '__main__':
     unittest.main()
