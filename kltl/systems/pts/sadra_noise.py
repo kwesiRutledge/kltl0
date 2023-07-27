@@ -5,6 +5,7 @@ Description:
     "Formal methods for adaptive control of dynamical systems" paper.
 """
 import numpy as np
+from random import choice
 
 from kltl.systems.pts import ParametricTransitionSystem, FiniteTrajectory
 
@@ -30,7 +31,7 @@ class SadraSystem(ParametricTransitionSystem):
         Act = ["up", "left", "right", "down"]  # Action Space
         Y = S  # Output Space
         AP = ["Crashed!", "Surveil1", "Surveil2"]  # Atomic Propositions
-        Theta = ["-3","-2", "-1", "0", "1", "2","3"]
+        Theta = ["-2", "-1", "0", "1", "2"]
 
         # Initial State set
         I = [f"s_(0,{n_cols - 5})"]
@@ -40,13 +41,11 @@ class SadraSystem(ParametricTransitionSystem):
         # Create the transitions
         for row_idx in range(n_rows):
             for col_idx in range(n_cols):
-                for theta in self.Theta[1:-2]:
+                for theta in self.Theta:
                     if (row_idx >= windy_region_y_lb) and (row_idx <= windy_region_y_ub):
                         self.add_transitions_for_shift(theta, (row_idx, col_idx))
-                        self.add_transitions_for_shift(str(int(theta)+1), (row_idx, col_idx))
-                        self.add_transitions_for_shift(str(int(theta)-1), (row_idx, col_idx))
                     else:
-                        add_standard_transitions_for_mode(self, theta, (row_idx, col_idx), n_rows, n_cols)
+                        add_standard_transitions_for_mode(self, "0", (row_idx, col_idx), n_rows, n_cols)
                         
         # Create the output map
         for row_idx in range(n_rows):
@@ -98,6 +97,37 @@ class SadraSystem(ParametricTransitionSystem):
 
         s_i_right = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift + 1)})"
         self.add_transition(s_i, "right", theta, s_i_right)
+        
+        # Add Transitions for noise with greater disturbance
+        shift += 1
+        
+        s_i_up = f"s_({self.clamp_row(state_coords[0] - 1)},{self.clamp_col(state_coords[1] - shift)})"
+        self.add_transition(s_i, "up", theta, s_i_up)
+
+        s_i_down = f"s_({self.clamp_row(state_coords[0] + 1)},{self.clamp_col(state_coords[1] - shift)})"
+        self.add_transition(s_i, "down", theta, s_i_down)
+
+        s_i_left = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift - 1)})"
+        self.add_transition(s_i, "left", theta, s_i_left)
+
+        s_i_right = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift + 1)})"
+        self.add_transition(s_i, "right", theta, s_i_right)
+        
+        # Add Transitions for noise with less disturbance
+        shift -= 1
+        
+        s_i_up = f"s_({self.clamp_row(state_coords[0] - 1)},{self.clamp_col(state_coords[1] - shift)})"
+        self.add_transition(s_i, "up", theta, s_i_up)
+
+        s_i_down = f"s_({self.clamp_row(state_coords[0] + 1)},{self.clamp_col(state_coords[1] - shift)})"
+        self.add_transition(s_i, "down", theta, s_i_down)
+
+        s_i_left = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift - 1)})"
+        self.add_transition(s_i, "left", theta, s_i_left)
+
+        s_i_right = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift + 1)})"
+        self.add_transition(s_i, "right", theta, s_i_right)
+        
 
     def state_name_to_coordinates(self, state: State)->Tuple[int, int]:
         """
@@ -314,3 +344,13 @@ def add_perturbed_transitions_for_mode(
     s_i_right = f"s_({state_coords[0]},{max(state_coords[1]-1, 0)})"
     ts.add_transition(s_i, "right", theta, s_i_right)
 
+# x_i = 's_(8,13)'
+
+# sadra = get_sadra_system()
+# transitions = []
+
+# for transition in sadra.transitions:
+#     if sadra.Y[transition[0]] == x_i:
+#         transitions.append(transition)
+# for transition in transitions: 
+#     if sadra.Act[transition[1]] == 'up': print(transition)

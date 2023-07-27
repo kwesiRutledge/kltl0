@@ -15,6 +15,6 @@ policies = ControlPolicies(1)
 # policy2 = policies.control_policy_2
 policy3 = policies.control_policy_3
 
-# print(get_all_trajectories(policy1, 10, sadra))
-# print(get_all_trajectories(policy2, 10, sadra))
+# print(get_all_trajectories(policy1, 50, sadra))
+# print(get_all_trajectories(policy2, 50, sadra))
 print(get_all_trajectories(policy3, 50, sadra))
