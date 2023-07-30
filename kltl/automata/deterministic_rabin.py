@@ -24,6 +24,8 @@ class DeterministicRabinAutomaton(object):
             Q0 = []
         if transitions is None:
             transitions = []
+        if F is None:
+            F = []
 
         self.Q = Q
         self.Sigma = Sigma
@@ -46,3 +48,18 @@ class DeterministicRabinAutomaton(object):
             return [self.Q[q2] for (q1, a1, q2) in self.transitions if q1 == self.Q.index(q)]
         else:
             return [self.Q[q2] for (q1, a1, q2) in self.transitions if q1 == self.Q.index(q) and a1 == self.Sigma.index(sigma)]
+
+    def add_accepting_pair(self, F_i: Set[State], I_i: Set[State]):
+        """
+        add_accepting_pair
+        Description:
+            Adds a pair of accepting sets to the automaton.
+        :param F_i:
+        :param I_i:
+        :return:
+        """
+        assert set(F_i).issubset(set(self.Q)), f"Accepting set {F_i} is not a subset of the state space!"
+        assert set(I_i).issubset(set(self.Q)), f"Accepting set {I_i} is not a subset of the state space!"
+
+        if (set(F_i), set(I_i)) not in self.F:
+            self.F += [(set(F_i), set(I_i))]
