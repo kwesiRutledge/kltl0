@@ -7,6 +7,7 @@ Description:
 from typing import List, Set, Tuple
 
 from kltl.types import State, Action, AtomicProposition, Transition
+import networkx as nx
 
 class TransitionSystem(object):
     def __init__(
@@ -87,3 +88,25 @@ class TransitionSystem(object):
                 seen_kp1.update(self.post(s))
 
         return list(seen_kp1)
+
+    def to_networkx_graph(self):
+        """
+        G = ts.to_networkx_graph()
+        Description:
+            Converts the transition system to a networkx graph.
+        :return:
+        """
+
+        G = nx.Graph()
+
+        # Add all nodes
+        G.add_nodes_from([
+            (s, {'label': self.L(s)}) for s in self.S
+        ])
+
+        # Add all transitions
+        G.add_edges_from([
+            (self.S[s1], self.S[s2], {'action': self.Act[a]}) for (s1, a, s2) in self.transitions
+        ])
+
+        return G
