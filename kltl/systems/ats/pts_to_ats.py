@@ -21,7 +21,7 @@ def pts2ats(system: ParametricTransitionSystem) -> AdaptiveTransitionSystem:
     Act = system.Act
 
     # Construct new S
-    S_adp_new = [(s, system.Theta) for s in system.S]
+    S_adp_new = [(s, system.Theta) for s in system.I]
     S_adp = S_adp_new
     transitions = []
 
@@ -49,8 +49,11 @@ def pts2ats(system: ParametricTransitionSystem) -> AdaptiveTransitionSystem:
     ats_out = AdaptiveTransitionSystem(
         S_adp, system.Act, system.AP,
         I=[(s, system.Theta) for s in system.I],
-        transitions=transitions,
     )
+
+    # Add transitions
+    for transition in transitions:
+        ats_out.add_transition(transition[0], transition[1], transition[2])
 
     # Add outputs for each state
     for (s, eta) in S_adp:
