@@ -8,6 +8,9 @@ from typing import List, Set, Tuple
 
 from kltl.types import Action, AtomicProposition
 from .ats_types import ATSState, ATSTransition
+from kltl.automata import DeterministicRabinAutomaton
+from .. import TransitionSystem
+
 
 class AdaptiveTransitionSystem(object):
     def __init__(
@@ -45,9 +48,6 @@ class AdaptiveTransitionSystem(object):
         assert s in self.S, f" ATSState {s} is not in state space!"
         assert ap in self.AP, f"Proposition {ap} is not in atomic proposition space!"
 
-        print("self.S.index(s)", self.S.index(s))
-        print("self.AP.index(ap)", self.AP.index(ap))
-        print(self.labels)
         self.labels += [(self.S.index(s), self.AP.index(ap))]
 
     def post(self, s: ATSState, a: Action = None) -> List[ATSState]:
@@ -72,3 +72,48 @@ class AdaptiveTransitionSystem(object):
 
         # Return
         return [self.AP[ap1] for (s1, ap1) in self.labels if s1 == self.S.index(s)]
+
+    def product(self, automaton: DeterministicRabinAutomaton):
+        """
+        product_ts = ts.product(automaton)
+        Description:
+            Creates the product of the transition system and a NFA.
+        :param automaton:
+        :return:
+        """
+
+        # Input Processing
+        assert isinstance(automaton, DeterministicRabinAutomaton), f"Input {automaton} is not a DeterministicRabinAutomaton!"
+
+        # Create the product's states
+        S_prime = [(s, q) for s in self.S for q in automaton.Q]
+
+        # Create the product's transition relation
+        transitions_prime = []
+        for (s, act, t_index) in self.transitions:
+            for (q, sigma_index, p) in automaton.transitions:
+                if automaton.Sigma[sigma_index] == set(self.L(self.S[t_index])):
+                    transitions_prime += [(
+                        S_prime.index((self.S[s], automaton.Q[q])),
+                        act,
+                        S_prime.index((self.S[t_index], automaton.Q[p]))
+                    )]
+
+        transitions_prime = list(set(transitions_prime))  # Make sure there aren't duplicates
+
+        # Create the initial states of the product
+        I_prime = []
+        for s0 in self.I:
+            for (q0_index, sigma, q_index) in automaton.transitions:
+                if automaton.Q[q0_index] in automaton.Q0 and automaton.Sigma[sigma] == set(self.L(s0)):
+                    I_prime += [(s0, automaton.Q[q_index])]
+
+        # Create output system
+        ts_out = TransitionSystem(S_prime, self.Act, automaton.Q, I=I_prime, transitions=transitions_prime)
+
+        # Create the labels of the system.
+        for (s, q) in S_prime:
+            ts_out.add_label((s, q), q)
+
+        return ts_out
+

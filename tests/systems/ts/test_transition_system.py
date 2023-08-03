@@ -69,7 +69,7 @@ class TestTransitionSystem(unittest.TestCase):
             ts1.L("s1"), ["p1", "p2"],
         )
 
-    def test_transition1(self):
+    def test_add_transition1(self):
         ts1 = TransitionSystem(
             ["s1", "s2", "s3"], ["a1", "a2"], ["p1", "p2", "p3"],
         )
@@ -86,6 +86,29 @@ class TestTransitionSystem(unittest.TestCase):
         self.assertEqual(
             ts1.post("s1"), ["s2", "s3"],
         )
+
+    def test_to_networkx_graph1(self):
+        """
+        test_to_networkx_graph1
+        Description:
+            Tests how well the conversion from our representation to a networkx graph works.
+            IS it better to use their representation?
+        :return:
+        """
+        ts1 = TransitionSystem(
+            ["s1", "s2", "s3"], ["a1", "a2"], ["p1", "p2", "p3"],
+        )
+
+        # Add a transition
+        ts1.add_transition("s1", "a1", "s2")
+        ts1.add_transition("s1", "a2", "s3")
+
+        # Convert to networkx graph
+        graph = ts1.to_networkx_graph()
+
+        # Check that the transition set has one element
+        self.assertEqual(len(graph.nodes), 3)
+        self.assertEqual(len(graph.edges), 2)
 
 if __name__ == '__main__':
     unittest.main()

@@ -7,6 +7,7 @@ Description:
 from typing import List, Set, Tuple
 
 from kltl.types import State, Action, AtomicProposition, Transition
+import networkx as nx
 
 class TransitionSystem(object):
     def __init__(
@@ -44,9 +45,6 @@ class TransitionSystem(object):
         assert s in self.S, f" State {s} is not in state space!"
         assert ap in self.AP, f"Proposition {ap} is not in atomic proposition space!"
 
-        print("self.S.index(s)", self.S.index(s))
-        print("self.AP.index(ap)", self.AP.index(ap))
-        print(self.labels)
         self.labels += [(self.S.index(s), self.AP.index(ap))]
 
     def post(self, s: State, a: Action = None) -> List[State]:
@@ -71,3 +69,44 @@ class TransitionSystem(object):
 
         # Return
         return [self.AP[ap1] for (s1, ap1) in self.labels if s1 == self.S.index(s)]
+
+    def reachable_states_from(self, S_in: List[State]) -> List[State]:
+        """
+        S_reachable = ts.reachable_states(S_in)
+        :param S_in: Set of state to begin from during reachable set computation.
+        :return:
+        """
+        # Constants
+
+        # Start algorithm
+        seen_k = set()
+        seen_kp1 = set(S_in)
+
+        while seen_k != seen_kp1:
+            seen_k = seen_kp1.copy()
+            for s in seen_k:
+                seen_kp1.update(self.post(s))
+
+        return list(seen_kp1)
+
+    def to_networkx_graph(self):
+        """
+        G = ts.to_networkx_graph()
+        Description:
+            Converts the transition system to a networkx graph.
+        :return:
+        """
+
+        G = nx.Graph()
+
+        # Add all nodes
+        G.add_nodes_from([
+            (s, {'label': self.L(s)}) for s in self.S
+        ])
+
+        # Add all transitions
+        G.add_edges_from([
+            (self.S[s1], self.S[s2], {'action': self.Act[a]}) for (s1, a, s2) in self.transitions
+        ])
+
+        return G
