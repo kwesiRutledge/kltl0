@@ -8,3 +8,6 @@ matplotlib
 # Testing
 pytest
 pytest-cov
+
+# Managing Data
+pyyaml
