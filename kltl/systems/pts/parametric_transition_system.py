@@ -5,6 +5,7 @@ Description:
 """
 
 from typing import List, Set, Tuple
+import numpy as np
 
 from kltl.types import State, Action, AtomicProposition, Output
 from .pts_types import Transition, Parameter
@@ -37,11 +38,11 @@ class ParametricTransitionSystem:
         if Theta is None:
             Theta = []
         if transitions is None:
-            transitions = []
+            transitions = np.zeros((0, 4), dtype=int)
         if labels is None:
-            labels = []
+            labels = np.zeros((0, 2), dtype=int)
         if output_map is None:
-            output_map = []
+            output_map = np.zeros((0, 3), dtype=int)
 
         self.S = S
         self.Act = Act
@@ -64,15 +65,41 @@ class ParametricTransitionSystem:
         assert theta in self.Theta, f"Parameter {theta} is not in parameter space!"
         assert a in self.Act
 
-        self.transitions += [(self.S.index(s1), self.Act.index(a), self.Theta.index(theta), self.S.index(s2))]
-        self.transitions = list(set(self.transitions))
+        if self.transition_exists(s1, a, theta, s2):
+            return
+
+        self.transitions = np.vstack(
+            (self.transitions, [(self.S.index(s1), self.Act.index(a), self.Theta.index(theta), self.S.index(s2))]),
+        )
+
+    def transition_exists(self, s1: State, a: Action, theta: Parameter, s2: State):
+        matching_transition_indices = np.argwhere(
+            np.all(
+                self.transitions == np.array([self.S.index(s1), self.Act.index(a), self.Theta.index(theta), self.S.index(s2)]),
+                axis=-1,
+            )
+        )
+        return len(matching_transition_indices) > 0
 
     def add_label(self, s: State, ap: AtomicProposition):
         assert s in self.S, f" State {s} is not in state space!"
         assert ap in self.AP, f"Proposition {ap} is not in atomic proposition space!"
 
-        self.labels += [(self.S.index(s), self.AP.index(ap))]
-        self.labels = list(set(self.labels))
+        if self.label_exists(s, ap):
+            return
+
+        self.labels = np.vstack(
+            (self.labels, np.array([self.S.index(s), self.AP.index(ap)], dtype=int))
+        )
+
+    def label_exists(self, s1: State, ap: AtomicProposition):
+        matching_transition_indices = np.argwhere(
+            np.all(
+                self.labels == np.array([self.S.index(s1), self.AP.index(ap)]),
+                axis=-1,
+            )
+        )
+        return len(matching_transition_indices) > 0
 
     def add_output(self, s: State, theta: Parameter, o: Output):
         """
@@ -88,8 +115,21 @@ class ParametricTransitionSystem:
         assert theta in self.Theta, f"Parameter {theta} is not in parameter space!"
         assert o in self.Y, f" Output {o} is not in the output space!"
 
-        self.output_map += [(self.S.index(s), self.Theta.index(theta), self.Y.index(o))]
-        self.output_map = list(set(self.output_map))
+        if self.output_exists(s, theta, o):
+            return
+
+        self.output_map = np.vstack(
+            (self.output_map, np.array([(self.S.index(s), self.Theta.index(theta), self.Y.index(o))], dtype=int)),
+        )
+
+    def output_exists(self, s1: State, theta: Parameter, o: Output):
+        matching_transition_indices = np.argwhere(
+            np.all(
+                self.output_map == np.array([self.S.index(s1), self.Theta.index(theta), self.Y.index(o)]),
+                axis=-1,
+            )
+        )
+        return len(matching_transition_indices) > 0
 
     def post(self, s: State, a: Action = None, theta: Parameter = None) -> List[State]:
         assert s in self.S, f"State {s} is not in state space!"
@@ -120,7 +160,9 @@ class ParametricTransitionSystem:
         assert s in self.S, f" State {s} is not in state space!"
 
         # Return
-        return [self.AP[ap1] for (s1, ap1) in self.labels if s1 == self.S.index(s)]
+        labels_for_s = np.argwhere(self.labels[:, 0] == self.S.index(s)).flatten()
+        matching_labels = self.labels[labels_for_s, 1]
+        return [self.AP[ap1] for ap1 in matching_labels]
 
     def O(self, s: State, theta: Parameter = None) -> List[Output]:
         """
@@ -135,19 +177,20 @@ class ParametricTransitionSystem:
         assert s in self.S, f" State {s} is not in state space!"
 
         # Return
-        O_s = []
+        output_list = []
         if theta is None:
-            O_s = []
-            for theta in self.Theta:
-                O_s += self.O(s, theta)
+            outputs_from_s = np.argwhere(
+                self.output_map[:, 0] == self.S.index(s)
+            ).flatten()
+            output_list = self.output_map[outputs_from_s, 2]
         else:
             assert theta in self.Theta, f"Parameter {theta} is not in parameter space!"
-            O_s = [
-                self.Y[o_index]
-                for (s_index, theta_index, o_index) in self.output_map
-                if s_index == self.S.index(s) and theta_index == self.Theta.index(theta)
-            ]
+            outputs_from_s_with_theta = np.argwhere(
+                np.logical_and(self.output_map[:, 0] == self.S.index(s), self.output_map[:, 1] == self.Theta.index(theta))
+            )
+            output_list = self.output_map[outputs_from_s_with_theta, 2]
 
         # Get unique elements of O_s
+        O_s = [self.Y[o1] for o1 in output_list]
         return list(set(O_s))
 

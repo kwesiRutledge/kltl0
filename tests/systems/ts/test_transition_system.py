@@ -64,7 +64,7 @@ class TestTransitionSystem(unittest.TestCase):
         ts1.add_label("s1", "p2")
 
         # Check that the transition set has one element
-        self.assertEqual(len(ts1.labels), 2)
+        self.assertEqual(ts1.labels.shape[0], 2)
         self.assertEqual(
             ts1.L("s1"), ["p1", "p2"],
         )

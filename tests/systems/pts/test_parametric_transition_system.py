@@ -54,5 +54,42 @@ class TestParametricTransitionSystem(unittest.TestCase):
             len(sys.O("s1")), 1,
         )
 
+    def test_add_transition1(self):
+        ts1 = ParametricTransitionSystem(
+            ["s1", "s2", "s3"], ["a1", "a2"], ["p1", "p2", "p3"],
+            Theta=["theta1", "theta2"],
+        )
+
+        # Check that the transition system is empty
+        self.assertEqual(len(ts1.labels), 0)
+
+        # Add a transition
+        ts1.add_transition("s1", "a1", "theta1", "s2")
+        ts1.add_transition("s1", "a2", "theta1", "s3")
+
+        # Check that the transition set has one element
+        self.assertEqual(len(ts1.transitions), 2)
+        self.assertEqual(
+            ts1.post("s1"), ["s2", "s3"],
+        )
+
+    def test_add_label1(self):
+        pts1 = ParametricTransitionSystem(
+            ["s1", "s2", "s3"], ["a1", "a2"], ["p1", "p2", "p3"],
+        )
+
+        # Check that the transition system is empty
+        self.assertEqual(pts1.transitions.shape[0], 0)
+
+        # Add a transition
+        pts1.add_label("s1", "p1")
+        pts1.add_label("s1", "p2")
+
+        # Check that the transition set has one element
+        self.assertEqual(pts1.labels.shape[0], 2)
+        self.assertEqual(
+            pts1.L("s1"), ["p1", "p2"],
+        )
+
 if __name__ == '__main__':
     unittest.main()
