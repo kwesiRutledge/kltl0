@@ -123,13 +123,13 @@ class ParametricTransitionSystem:
         )
 
     def output_exists(self, s1: State, theta: Parameter, o: Output):
-        matching_transition_indices = np.argwhere(
+        matching_output_indices = np.argwhere(
             np.all(
                 self.output_map == np.array([self.S.index(s1), self.Theta.index(theta), self.Y.index(o)]),
                 axis=-1,
             )
         )
-        return len(matching_transition_indices) > 0
+        return len(matching_output_indices) > 0
 
     def post(self, s: State, a: Action = None, theta: Parameter = None) -> List[State]:
         assert s in self.S, f"State {s} is not in state space!"
