@@ -295,11 +295,11 @@ def add_standard_transitions_for_mode(
     s_i = f"s_({state_coords[0]},{state_coords[1]})"
 
     # Add Transitions
-    if state_coords[0] != 0:  # If current state is at the top of the space, it can not move north
+    if state_coords[0] != n_rows - 1:  # If current state is at the top of the space, it can not move north
         s_i_next = f"s_({state_coords[0]-1},{state_coords[1]})"
         ts.add_transition(s_i, "up", theta, s_i_next)
 
-    if state_coords[0] != n_rows - 1:  # If current state is a the bottom of the space, it can not move south.
+    if state_coords[0] != 0:  # If current state is a the bottom of the space, it can not move south.
         s_i_next = f"s_({state_coords[0]+1},{state_coords[1]})"
         ts.add_transition(s_i, "down", theta, s_i_next)
 
