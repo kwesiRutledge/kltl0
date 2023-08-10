@@ -8,6 +8,7 @@ from typing import List, Set, Tuple
 import networkx as nx
 import numpy as np
 
+from kltl.systems.graph_utils import transition_matrix2adjacency_matrix
 from kltl.types import State, Action, AtomicProposition, Transition
 
 class TransitionSystem(object):
@@ -111,16 +112,20 @@ class TransitionSystem(object):
         :return:
         """
 
-        G = nx.Graph()
+        transition_matrix = self.transitions[:, [0, 2]]
+        G = nx.DiGraph(
+            transition_matrix2adjacency_matrix(self),
+        )
 
         # Add all nodes
-        G.add_nodes_from([
-            (s, {'label': self.L(s)}) for s in self.S
-        ])
+        #G.add_nodes_from(range(len(self.S)))
+        # G.add_nodes_from([
+        #     (s, {'label': self.L(s)}) for s in self.S
+        # ])
 
         # Add all transitions
-        G.add_edges_from([
-            (self.S[s1], self.S[s2], {'action': self.Act[a]}) for (s1, a, s2) in self.transitions
-        ])
+        # G.add_edges_from([
+        #     (self.S[s1], self.S[s2], {'action': self.Act[a]}) for (s1, a, s2) in self.transitions
+        # ])
 
         return G
