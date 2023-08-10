@@ -117,15 +117,35 @@ class TransitionSystem(object):
             transition_matrix2adjacency_matrix(self),
         )
 
-        # Add all nodes
-        #G.add_nodes_from(range(len(self.S)))
-        # G.add_nodes_from([
-        #     (s, {'label': self.L(s)}) for s in self.S
-        # ])
-
-        # Add all transitions
-        # G.add_edges_from([
-        #     (self.S[s1], self.S[s2], {'action': self.Act[a]}) for (s1, a, s2) in self.transitions
-        # ])
-
         return G
+
+    def find_action_sequence_that_explains_state_sequence(self, state_sequence: List[State])->List[int]:
+        """
+        Description:
+            Use recursion to find the explaining transition sequence.
+        :param state_sequence:
+        :return: numpy array containing the INDEX of the actions taken; i.e., the action sequence is a list of integers,
+            not a list of actions. To get the list of actions run:
+            ```
+            [ts.Act[i] for i in action_sequence]
+            ```
+        """
+        # Convert list to array of indices
+        index_sequence = np.array([self.S.index(s) for s in state_sequence])
+
+        # Algorithm
+        if (len(state_sequence) == 1) or (len(state_sequence) == 0):
+            return []
+        elif len(state_sequence) == 2:
+            matching_transitions = np.argwhere(
+                np.logical_and((self.transitions[:, 0] == index_sequence[0]), (self.transitions[:, 2] == index_sequence[1]))
+            ).flatten()
+            assert len(matching_transitions) > 0, f"State sequence {state_sequence} is not valid!"
+            return np.array([self.transitions[matching_transitions[0], 1]]) # Action index
+        else:
+            # Recursive call
+            action_sequence = np.append(
+                self.find_action_sequence_that_explains_state_sequence(state_sequence[:2]),
+                self.find_action_sequence_that_explains_state_sequence(state_sequence[1:])
+            )
+            return action_sequence

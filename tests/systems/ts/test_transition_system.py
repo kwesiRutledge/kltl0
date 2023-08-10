@@ -110,5 +110,60 @@ class TestTransitionSystem(unittest.TestCase):
         self.assertEqual(len(graph.nodes), 3)
         self.assertEqual(len(graph.edges), 2)
 
+    def test_find_action_sequence_that_explains_state_sequence1(self):
+        """
+        test_find_action_sequence_that_explains_state_sequence1
+        Description:
+            Tests that the state recovery works for a simple example (sequence contains one element.
+        :return:
+        """
+        ts1 = TransitionSystem(
+            ["s1", "s2", "s3"], ["a1", "a2"], ["p1", "p2", "p3"],
+        )
+
+        # Add a transition
+        ts1.add_transition("s1", "a1", "s2")
+        ts1.add_transition("s1", "a2", "s1")
+        ts1.add_transition("s2", "a1", "s3")
+        ts1.add_transition("s2", "a2", "s1")
+        ts1.add_transition("s3", "a1", "s3")
+        ts1.add_transition("s3", "a2", "s2")
+
+        # Find the action sequence that explains the state sequence
+        a = ts1.find_action_sequence_that_explains_state_sequence(["s1"])
+        self.assertEqual(a, [])
+
+        a = ts1.find_action_sequence_that_explains_state_sequence([])
+        self.assertEqual(a, [])
+
+    def test_find_action_sequence_that_explains_state_sequence2(self):
+        """
+        test_find_action_sequence_that_explains_state_sequence2
+        Description:
+            Tests that the state recovery works for a simple example (sequence contains more than one element).
+        :return:
+        """
+        ts1 = TransitionSystem(
+            ["s1", "s2", "s3"], ["a1", "a2"], ["p1", "p2", "p3"],
+        )
+
+        # Add a transition
+        ts1.add_transition("s1", "a1", "s2")
+        ts1.add_transition("s1", "a2", "s1")
+        ts1.add_transition("s2", "a1", "s3")
+        ts1.add_transition("s2", "a2", "s1")
+        ts1.add_transition("s3", "a1", "s3")
+        ts1.add_transition("s3", "a2", "s2")
+
+        # Find the action sequence that explains the state sequence
+        a = ts1.find_action_sequence_that_explains_state_sequence(["s1", "s2"])
+        self.assertEqual([ts1.Act[int(i)] for i in a], ["a1"])
+
+        a = ts1.find_action_sequence_that_explains_state_sequence(["s1", "s2", "s3"])
+        self.assertEqual([ts1.Act[int(i)] for i in a], ["a1", "a1"])
+
+        a = ts1.find_action_sequence_that_explains_state_sequence(["s1", "s2", "s3", "s3", "s2"])
+        self.assertEqual([ts1.Act[int(i)] for i in a], ["a1", "a1", "a1", "a2"])
+
 if __name__ == '__main__':
     unittest.main()
