@@ -11,3 +11,7 @@ pytest-cov
 
 # Managing Data
 pyyaml
+
+# Misc
+typer
+ipdb
