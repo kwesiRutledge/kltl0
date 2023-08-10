@@ -6,6 +6,8 @@ Description:
 
 from typing import List, Set, Tuple
 
+import numpy as np
+
 from kltl.types import Action, AtomicProposition
 from .ats_types import ATSState, ATSTransition
 from kltl.automata import DeterministicRabinAutomaton
@@ -17,8 +19,8 @@ class AdaptiveTransitionSystem(object):
             self,
             S: List[ATSState], Act: List[Action], AP: List[AtomicProposition],
             I: List[ATSState] = None,
-            transitions: List[ATSTransition] = None,
-            labels: List[Tuple[ATSState, AtomicProposition]] = None,
+            transitions: np.array = None,
+            labels: np.array = None,
     ):
         # Input Processing
         assert len(S) > 0
@@ -26,9 +28,9 @@ class AdaptiveTransitionSystem(object):
         if I is None:
             I = []
         if transitions is None:
-            transitions = []
+            transitions = np.zeros((0, 3), dtype=int)
         if labels is None:
-            labels = []
+            labels = np.zeros((0, 2), dtype=int)
 
         self.S = S
         self.Act = Act
@@ -42,13 +44,42 @@ class AdaptiveTransitionSystem(object):
         assert s2 in self.S, f" ATSState {s2} is not in state space!"
         assert a in self.Act
 
-        self.transitions += [(self.S.index(s1), self.Act.index(a), self.S.index(s2))]
+        if self.transition_exists(s1, a, s2):
+            return
+
+        self.transitions = np.vstack(
+            (self.transitions, np.array([(self.S.index(s1), self.Act.index(a), self.S.index(s2))]))
+        )
+
+    def transition_exists(self, s1: ATSState, a: Action, s2: ATSState):
+        matching_transition_indices = np.argwhere(
+            np.all(
+                self.transitions == np.array([self.S.index(s1), self.Act.index(a), self.S.index(s2)]),
+                axis=-1,
+            )
+        )
+        return len(matching_transition_indices) > 0
 
     def add_label(self, s: ATSState, ap: AtomicProposition):
         assert s in self.S, f" ATSState {s} is not in state space!"
         assert ap in self.AP, f"Proposition {ap} is not in atomic proposition space!"
 
-        self.labels += [(self.S.index(s), self.AP.index(ap))]
+        if self.label_exists(s, ap):
+            return
+
+        self.labels = np.vstack(
+            (self.labels, np.array([(self.S.index(s), self.AP.index(ap))])),
+        )
+
+    def label_exists(self, s1: ATSState, ap: AtomicProposition):
+        matching_transition_indices = np.argwhere(
+            np.all(
+                self.labels == np.array([self.S.index(s1), self.AP.index(ap)]),
+                axis=-1,
+            )
+        )
+        return len(matching_transition_indices) > 0
+
 
     def post(self, s: ATSState, a: Action = None) -> List[ATSState]:
         assert s in self.S, f"ATSState {s} is not in state space!"
@@ -89,24 +120,34 @@ class AdaptiveTransitionSystem(object):
         S_prime = [(s, q) for s in self.S for q in automaton.Q]
 
         # Create the product's transition relation
-        transitions_prime = []
+        transitions_prime = np.zeros((0, 3), dtype=int)
         for (s, act, t_index) in self.transitions:
             for (q, sigma_index, p) in automaton.transitions:
                 if automaton.Sigma[sigma_index] == set(self.L(self.S[t_index])):
-                    transitions_prime += [(
-                        S_prime.index((self.S[s], automaton.Q[q])),
-                        act,
-                        S_prime.index((self.S[t_index], automaton.Q[p]))
-                    )]
+                    transitions_prime = np.vstack(
+                        (
+                            transitions_prime,
+                            np.array([
+                                S_prime.index((self.S[s], automaton.Q[q])),
+                                act,
+                                S_prime.index((self.S[t_index], automaton.Q[p]))
+                            ]),
+                        )
+                    )
 
-        transitions_prime = list(set(transitions_prime))  # Make sure there aren't duplicates
+        #transitions_prime = list(set(transitions_prime))  # Make sure there aren't duplicates
+        # Remove disconnected states from Product TODO: Requires careful thought about how indices change in transitions_prime
+        # S_double_prime = [
+        #     (s, q) for (s, q) in S_prime
+        #     if np.any( np.logical_and(transitions_prime[:, 0] == S_prime.index(s), transitions_prime[:, 2] == S_prime.index(s)))
+        # ]
 
         # Create the initial states of the product
         I_prime = []
         for s0 in self.I:
             for (q0_index, sigma, q_index) in automaton.transitions:
                 if automaton.Q[q0_index] in automaton.Q0 and automaton.Sigma[sigma] == set(self.L(s0)):
-                    I_prime += [(s0, automaton.Q[q_index])]
+                    I_prime += (s0, automaton.Q[q_index])
 
         # Create output system
         ts_out = TransitionSystem(S_prime, self.Act, automaton.Q, I=I_prime, transitions=transitions_prime)
