@@ -10,9 +10,14 @@ Notes:
 import os
 import time
 from itertools import combinations, chain
-from typing import Tuple
+from typing import Tuple, List
 
+import ipdb
+import networkx as nx
+import numpy as np
+import typer as typer
 import yaml
+from matplotlib import pyplot as plt
 from yaml import Loader
 
 from kltl.automata import DeterministicRabinAutomaton
@@ -24,7 +29,8 @@ from kltl.systems.ats.pts_to_ats import pts2ats
 from kltl.systems.pts import ParametricTransitionSystem
 
 from kltl.systems.pts.sadra import get_sadra_system
-from kltl.systems.pts.trajectory import create_random_trajectory_with_N_actions
+from kltl.systems.pts.trajectory import create_random_trajectory_with_N_actions, FiniteTrajectory
+from kltl.types import Action
 
 
 def powerset(iterable):
@@ -100,10 +106,11 @@ def create_automaton_for_negation_of_task(sadra_system: ParametricTransitionSyst
 
     return dra
 
-def conversion_step(sadra_system: ParametricTransitionSystem, data_dir: str) -> DeterministicRabinAutomaton:
+def conversion_step(sadra_system: ParametricTransitionSystem, data_dir: str, force: bool = False) -> DeterministicRabinAutomaton:
     """
     ats, timing = conversion_step(sadra_system, data_dir)
     :param sadra_system:
+    :param force: If True, then the conversion will be forced.
     :return:
     """
     # Constants
@@ -111,7 +118,9 @@ def conversion_step(sadra_system: ParametricTransitionSystem, data_dir: str) -> 
 
     # Algorithm
     conversion_time = -1.0
-    if not os.path.exists(sadra_ats_data_file): # If the data file does not exist, then create a system.
+    do_conversion = not os.path.exists(sadra_ats_data_file)  # If the data file does not exist, then create a system.
+    do_conversion = do_conversion or force  # Flag can be used to force conversion online.
+    if do_conversion:
         conversion_start = time.time()
         sadra_ats = pts2ats(sadra_system)
         conversion_end = time.time()
@@ -170,13 +179,16 @@ def product_step(
     sadra_ats: AdaptiveTransitionSystem,
     dra: DeterministicRabinAutomaton,
     data_dir: str,
+    force: bool = False,
 ) -> Tuple[TransitionSystem, float]:
     # Constants
     sadra_product_data_file = data_dir + 'sadra_product.yml'
 
     # Algorithm
     product_time = -1.0
-    if not os.path.exists(sadra_product_data_file):  # If the data file does not exist, then create a system.
+    compute_product = not os.path.exists(sadra_product_data_file)  # If the data file does not exist, then create a system.
+    compute_product = compute_product or force  # Flag can be used to force conversion online.
+    if compute_product:  # If the data file does not exist, then create a system.
         product_start = time.time()
         sadra_ats_product = sadra_ats.product(dra)
         product_end = time.time()
@@ -229,7 +241,71 @@ def product_step(
 
     return sadra_ats_product, product_time
 
-def main():
+def conversion_to_action_sequence_step(
+        paths: List[List[int]],
+        product_system: TransitionSystem,
+        force: bool = False,
+) -> Tuple[List[List[Action]], float]:
+    """
+    action_sequences, action_index_sequences, conversion_times = conversion_to_action_sequence_step(paths, product_ts)
+    Description:
+        Converts a list of action index sequences into a list of action sequences.
+        (Loads the data if it can find some)
+    :param action_index_sequences:
+    :param force: bool; forces the algorithm to do conversion.
+    :return:
+    """
+    # Constants
+    action_sequences_data_file = 'data/action_sequences.yml'
+
+    # Announcements
+    print("Finding all action sequences for the given paths...")
+
+    # Algorithm
+    action_sequences, action_index_sequences = [], []
+    conversion_times = []
+    if not os.path.exists(action_sequences_data_file) or force:
+        for path in paths:
+            path_convert_start_i = time.time()
+            action_index_sequence = product_system.find_action_sequence_that_explains_state_sequence(
+                [product_system.S[i] for i in path]
+            )
+            action_sequence = [product_system.Act[i] for i in action_index_sequence]
+            path_convert_end_i = time.time()
+
+            # Update loop variables
+            action_index_sequences.append(action_index_sequence)
+            action_sequences.append(action_sequence)
+            conversion_times.append(path_convert_end_i - path_convert_start_i)
+
+        data_struct = {
+            'action_sequences': action_sequences,
+            'conversion_times': conversion_times,
+        }
+
+        print(f" - Converted all {len(paths)} paths to {len(action_sequences)} action sequences.")
+        print(f" - Collected all action sequences in {np.array(conversion_times).sum()} seconds.")
+
+        with open(action_sequences_data_file, 'w') as f:
+            yaml.dump(data_struct, f)
+
+        print(f" - Saving action sequences to {action_sequences_data_file}")
+
+    else:
+        with open(action_sequences_data_file, 'r') as f:
+            load_start = time.time()
+            action_sequence_data = yaml.load(f, Loader=Loader)
+
+            action_sequences = action_sequence_data['action_sequences']
+            conversion_times = action_sequence_data['conversion_times']
+
+            load_end = time.time()
+            print(f"- Loaded action sequences from a previous computation in {load_end - load_start} s.")
+            print(f"- Previously collected all action sequences in {np.array(conversion_times).sum()} seconds.")
+
+    return action_sequences, action_index_sequences, np.array(conversion_times).sum()
+
+def main(force_pts_to_ats_conversion: bool = False, force_product_ts_creation: bool = False, force_action_sequence_conversion: bool = False):
     # Get System
     sadra = get_sadra_system()
     print("Created Sadra Paramteric Transition System with {} columns and {} rows.".format(sadra.n_cols, sadra.n_rows))
@@ -247,7 +323,7 @@ def main():
 
     # Convert Sadra PTS to an ATS
     print("Converting Sadra PTS to an ATS...")
-    sadra_ats, ats_conversion_time = conversion_step(sadra, data_dir)
+    sadra_ats, ats_conversion_time = conversion_step(sadra, data_dir, force=force_pts_to_ats_conversion)
 
     # Create task for avoiding the unsafe states and eventually reaching the goal
     phi = And(
@@ -261,14 +337,129 @@ def main():
 
     # Compute product of these two
     print("Computing product of the ATS and the automaton for the negation of the task...")
-    sadra_ats_product, product_time = product_step(sadra_ats, dra_out, data_dir)
+    sadra_ats_product, product_time = product_step(sadra_ats, dra_out, data_dir, force=force_product_ts_creation)
 
     # Convert product ts to a graph
     print("Converting product TS to a graph...")
     networkx_construction_start = time.time()
     sadra_ats_product_graph = sadra_ats_product.to_networkx_graph()
     networkx_construction_end = time.time()
-    print(f"Conversion to a graph took {networkx_construction_end - networkx_construction_start} seconds.")
+    print(f"- Conversion to a graph took {networkx_construction_end - networkx_construction_start} seconds.")
+    print(f"- Final graph contains:")
+    print(f"  + {len(sadra_ats_product_graph)} nodes")
+
+    # Finding all paths to the target state
+    print("Finding all paths to the target state...")
+    label_indices_containing_full_sat = sadra_ats_product.labels[:, 1] == sadra_ats_product.AP.index('q4') # Q4 is reached only if all tasks are satisfied
+    pathfind_times, num_paths_found, paths_found = [], 0, []
+    for s in sadra_ats_product.labels[label_indices_containing_full_sat, 0]:
+        #print("- Considering target state {}...".format(s))
+        if not nx.has_path(sadra_ats_product_graph, 0, s):
+            #print(" + State {} is not reachable from the initial state. Skipping".format(s))
+            continue
+
+        #print("  + Finding path to state {}...".format(s))
+        pathfind_i_start = time.time()
+        path = nx.shortest_path(sadra_ats_product_graph, 0, s)
+        pathfind_i_end = time.time()
+
+        # Report
+        #print("    ~ Path to state {} contains {} states".format(s, len(path)))
+        #print(f"    ~ Path to state {s} found in {pathfind_i_end - pathfind_i_start} seconds.")
+
+        # Update list of data
+        pathfind_times.append(pathfind_i_end - pathfind_i_start)
+        paths_found.append(path)
+
+    print(f"- Found {len(paths_found)} paths to states containing the full satisfaction of the task.")
+
+    # Characterize which paths visit danger states
+    print("Characterizing which paths visit danger states...")
+    num_safe_paths_found = 0
+    for path in paths_found:
+        #print(f"- Considering path {path}...")
+        # Find out if there are any labels for these elements of the path that have the danger albel
+        states_labeled_dangerous = sadra_ats_product.labels[
+            sadra_ats_product.labels[:, 1] == sadra_ats_product.AP.index("q5"), 0,
+        ]
+        dangerous_states_in_path = np.intersect1d(path, states_labeled_dangerous)
+
+        if len(dangerous_states_in_path) > 0:
+            # print(f"  + Path {path} contains dangerous states {dangerous_states_in_path}.")
+            pass
+        else:
+            # print(f"  + Path {path} does not contain any dangerous states.")
+            num_safe_paths_found += 1
+
+    print(f"- Found {num_safe_paths_found} paths that do not contain any dangerous states.")
+
+    action_sequences, action_index_sequences, conversion_times = conversion_to_action_sequence_step(
+        paths_found, sadra_ats_product, force=force_action_sequence_conversion,
+    )
+
+    traj_str = []
+    for i in range(len(action_sequences[0])):
+        traj_str += [sadra_ats_product.S[path[i]][0][0], sadra_ats_product.S[path[i]][0][0], action_sequences[0][i]]
+
+    traj_str += [sadra_ats_product.S[path[-1]][0][0], sadra_ats_product.S[path[-1]][0][0]]
+    traj0 = FiniteTrajectory(traj_str, "+1", sadra)
+
+    fig, ax = plt.subplots(1, 1)
+    sadra.save_animated_trajectory(traj0, "figures/example_reaching_traj.gif", ax=ax)
+    print(traj_str)
+    print(" - Plotted one trajectory.")
+
+    # for s in sadra_ats_product.S:
+    #     print(s)
+    #     if "Crashed!" in sadra.L(s[0][0]):
+    #         print(s)
+
+    # Find all paths that share the same action sequence (prefix)
+    print("Finding all paths that share the same action sequence (prefix)...")
+    n_prefixes_to_observe = 20
+    matching_mat = np.zeros((len(action_index_sequences), n_prefixes_to_observe), dtype=int)
+    for (i, action_index_sequence) in enumerate(action_index_sequences):
+        print(f"- Considering action sequence #{i}...")
+        for j in range(1, n_prefixes_to_observe): #range(len(action_index_sequence)):
+            paths_with_this_action_sequence = []
+            print(f"  + Checking prefix of length {j}...")
+
+            if len(action_index_sequence) < j-1:
+                print(f"    ~ Action sequence is too short. Skipping.")
+                continue
+
+
+            prefix = action_index_sequence[:j]
+            for (k, action_index_sequence_inner) in enumerate(action_index_sequences):
+                if i == k:
+                    continue
+                if len(action_index_sequence_inner) < j:
+                    continue
+
+                if np.all(prefix == action_index_sequence_inner[:j]):
+                    paths_with_this_action_sequence.append(k)
+
+            print(f"  ~ Found {len(paths_with_this_action_sequence)} paths with this action sequence prefix.")
+            matching_mat[i, j] = len(paths_with_this_action_sequence)
+
+    print(f"- Matching matrix is:")
+    print(matching_mat)
+
+    mm_fig = plt.figure()
+    plt.imshow(matching_mat)
+    plt.title("Prefix length histogram")
+    plt.xlabel("Prefix length")
+    plt.ylabel("Path index")
+
+
+
+    # Find all cycles in the graph
+    # print("Finding all cycles in the graph...")
+    # state_containing_reach1 = np.argmax(label_indices_containing_full_sat)
+    # cycles = nx.find_cycle(sadra_ats_product_graph, state_containing_reach1)
+    # print(f"- {len(sorted(cycles))} cycles found in the graph.")
+    # print(cycles)
 
 if __name__ == '__main__':
-    main()
+    with ipdb.launch_ipdb_on_exception():
+        typer.run(main)
