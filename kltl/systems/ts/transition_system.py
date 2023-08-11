@@ -53,7 +53,7 @@ class TransitionSystem(object):
             (self.labels, np.array([self.S.index(s), self.AP.index(ap)], dtype=int))
         )
 
-    def post(self, s: State, a: Action = None) -> List[State]:
+    def post_indices(self, s: State, a: Action = None) -> List[int]:
         assert s in self.S, f"State {s} is not in state space!"
         assert (a in self.Act) or (a is None), f"Action {a} is not in action space!"
 
@@ -66,6 +66,15 @@ class TransitionSystem(object):
                 np.logical_and((self.transitions[:, 0] == self.S.index(s)), (self.transitions[:, 1] == self.Act.index(a)))
             ).flatten()
             successor_states = self.transitions[transitions_from_s_with_a, 2]
+
+        return successor_states
+
+    def post(self, s: State, a: Action = None) -> List[State]:
+        assert s in self.S, f"State {s} is not in state space!"
+        assert (a in self.Act) or (a is None), f"Action {a} is not in action space!"
+
+        # Get the indices of the states that succeed this one.
+        successor_states = self.post_indices(s, a)
 
         return [self.S[s] for s in successor_states]
 
@@ -85,24 +94,26 @@ class TransitionSystem(object):
         matching_labels = self.labels[labels_for_s, 1]
         return [self.AP[ap1] for ap1 in matching_labels]
 
-    def reachable_states_from(self, S_in: List[State]) -> List[State]:
+    def reachable_states_from(self, S0: List[State]) -> List[State]:
         """
         S_reachable = ts.reachable_states(S_in)
         :param S_in: Set of state to begin from during reachable set computation.
         :return:
         """
         # Constants
+        S0_as_indices = [self.S.index(s) for s in S0]
 
         # Start algorithm
-        seen_k = set()
-        seen_kp1 = set(S_in)
+        seen_k = []
+        seen_kp1 = S0_as_indices
 
         while seen_k != seen_kp1:
             seen_k = seen_kp1.copy()
             for s in seen_k:
-                seen_kp1.update(self.post(s))
+                if s not in seen_kp1:
+                    seen_kp1.append(self.post_indices(self.S[s]))
 
-        return list(seen_kp1)
+        return [self.S[s] for s in seen_kp1]
 
     def to_networkx_graph(self):
         """
