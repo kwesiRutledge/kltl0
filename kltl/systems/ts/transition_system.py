@@ -5,17 +5,19 @@ Description:
 """
 
 from typing import List, Set, Tuple
-
-from kltl.types import State, Action, AtomicProposition, Transition
 import networkx as nx
+import numpy as np
+
+from kltl.systems.graph_utils import transition_matrix2adjacency_matrix
+from kltl.types import State, Action, AtomicProposition, Transition
 
 class TransitionSystem(object):
     def __init__(
             self,
             S: List[State], Act: List[Action], AP: List[AtomicProposition],
             I: List[State] = None,
-            transitions: List[Transition] = None,
-            labels: List[Tuple[State, AtomicProposition]] = None,
+            transitions: np.array = None,
+            labels: np.array = None,
     ):
         # Input Processing
         assert len(S) > 0
@@ -23,9 +25,9 @@ class TransitionSystem(object):
         if I is None:
             I = []
         if transitions is None:
-            transitions = []
+            transitions = np.zeros((0, 3), dtype=int)
         if labels is None:
-            labels = []
+            labels = np.zeros((0, 2), dtype=int)
 
         self.S = S
         self.Act = Act
@@ -39,22 +41,33 @@ class TransitionSystem(object):
         assert s2 in self.S, f" State {s2} is not in state space!"
         assert a in self.Act
 
-        self.transitions += [(self.S.index(s1), self.Act.index(a), self.S.index(s2))]
+        self.transitions = np.vstack(
+            (self.transitions, np.array([self.S.index(s1), self.Act.index(a), self.S.index(s2)], dtype=int))
+        )
 
     def add_label(self, s: State, ap: AtomicProposition):
         assert s in self.S, f" State {s} is not in state space!"
         assert ap in self.AP, f"Proposition {ap} is not in atomic proposition space!"
 
-        self.labels += [(self.S.index(s), self.AP.index(ap))]
+        self.labels = np.vstack(
+            (self.labels, np.array([self.S.index(s), self.AP.index(ap)], dtype=int))
+        )
 
     def post(self, s: State, a: Action = None) -> List[State]:
         assert s in self.S, f"State {s} is not in state space!"
         assert (a in self.Act) or (a is None), f"Action {a} is not in action space!"
 
+        successor_states = []
         if a is None:
-            return [self.S[s2] for (s1, a1, s2) in self.transitions if s1 == self.S.index(s)]
+            transitions_from_s = np.argwhere(self.transitions[:, 0] == self.S.index(s)).flatten()
+            successor_states = self.transitions[transitions_from_s, 2]
         else:
-            return [self.S[s2] for (s1, a1, s2) in self.transitions if s1 == self.S.index(s) and a1 == self.Act.index(a)]
+            transitions_from_s_with_a = np.argwhere(
+                np.logical_and((self.transitions[:, 0] == self.S.index(s)), (self.transitions[:, 1] == self.Act.index(a)))
+            ).flatten()
+            successor_states = self.transitions[transitions_from_s_with_a, 2]
+
+        return [self.S[s] for s in successor_states]
 
     def L(self, s: State) -> List[AtomicProposition]:
         """
@@ -68,7 +81,9 @@ class TransitionSystem(object):
         assert s in self.S, f" State {s} is not in state space!"
 
         # Return
-        return [self.AP[ap1] for (s1, ap1) in self.labels if s1 == self.S.index(s)]
+        labels_for_s = np.argwhere(self.labels[:, 0] == self.S.index(s)).flatten()
+        matching_labels = self.labels[labels_for_s, 1]
+        return [self.AP[ap1] for ap1 in matching_labels]
 
     def reachable_states_from(self, S_in: List[State]) -> List[State]:
         """
@@ -97,16 +112,40 @@ class TransitionSystem(object):
         :return:
         """
 
-        G = nx.Graph()
-
-        # Add all nodes
-        G.add_nodes_from([
-            (s, {'label': self.L(s)}) for s in self.S
-        ])
-
-        # Add all transitions
-        G.add_edges_from([
-            (self.S[s1], self.S[s2], {'action': self.Act[a]}) for (s1, a, s2) in self.transitions
-        ])
+        transition_matrix = self.transitions[:, [0, 2]]
+        G = nx.DiGraph(
+            transition_matrix2adjacency_matrix(self),
+        )
 
         return G
+
+    def find_action_sequence_that_explains_state_sequence(self, state_sequence: List[State])->List[int]:
+        """
+        Description:
+            Use recursion to find the explaining transition sequence.
+        :param state_sequence:
+        :return: numpy array containing the INDEX of the actions taken; i.e., the action sequence is a list of integers,
+            not a list of actions. To get the list of actions run:
+            ```
+            [ts.Act[i] for i in action_sequence]
+            ```
+        """
+        # Convert list to array of indices
+        index_sequence = np.array([self.S.index(s) for s in state_sequence])
+
+        # Algorithm
+        if (len(state_sequence) == 1) or (len(state_sequence) == 0):
+            return []
+        elif len(state_sequence) == 2:
+            matching_transitions = np.argwhere(
+                np.logical_and((self.transitions[:, 0] == index_sequence[0]), (self.transitions[:, 2] == index_sequence[1]))
+            ).flatten()
+            assert len(matching_transitions) > 0, f"State sequence {state_sequence} is not valid!"
+            return np.array([self.transitions[matching_transitions[0], 1]]) # Action index
+        else:
+            # Recursive call
+            action_sequence = np.append(
+                self.find_action_sequence_that_explains_state_sequence(state_sequence[:2]),
+                self.find_action_sequence_that_explains_state_sequence(state_sequence[1:])
+            )
+            return action_sequence

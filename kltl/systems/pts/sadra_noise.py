@@ -26,7 +26,7 @@ class SadraSystem(ParametricTransitionSystem):
         # Create state space
         self.n_cols = n_cols
         self.n_rows = n_rows
-        S = [f"s_({row_idx},{col_idx})" for row_idx in range(n_rows) for col_idx in range(n_cols)]
+        S = [f"s_({col_idx},{row_idx})" for row_idx in range(n_rows) for col_idx in range(n_cols)]
 
         Act = ["up", "left", "right", "down"]  # Action Space
         Y = S  # Output Space
@@ -34,7 +34,7 @@ class SadraSystem(ParametricTransitionSystem):
         Theta = ["-2", "-1", "0", "1", "2"]
 
         # Initial State set
-        I = [f"s_(0,{n_cols - 5})"]
+        I = [f"s_({n_cols - 5},0)"]
 
         super().__init__(S, Act, AP, I=I, Y=Y, Theta=Theta)
 
@@ -43,26 +43,63 @@ class SadraSystem(ParametricTransitionSystem):
             for col_idx in range(n_cols):
                 for theta in self.Theta:
                     if (row_idx >= windy_region_y_lb) and (row_idx <= windy_region_y_ub):
-                        self.add_transitions_for_shift(theta, (row_idx, col_idx))
+                        self.add_transitions_for_shift(theta, (col_idx, row_idx))
                     else:
-                        add_standard_transitions_for_mode(self, "0", (row_idx, col_idx), n_rows, n_cols)
+                        self.add_standard_transitions_for_mode("0", (col_idx, row_idx), n_rows, n_cols)
                         
         # Create the output map
         for row_idx in range(n_rows):
             for col_idx in range(n_cols):
                 for theta in self.Theta:
-                    self.add_output(f"s_({row_idx},{col_idx})", theta, f"s_({row_idx},{col_idx})")
-                    self.add_output(f"s_({row_idx},{col_idx})", theta, f"s_({row_idx},{col_idx})")
+                    self.add_output(f"s_({col_idx},{row_idx})", theta, f"s_({col_idx},{row_idx})")
+                    self.add_output(f"s_({col_idx},{row_idx})", theta, f"s_({col_idx},{row_idx})")
 
         # Label Two regions as important recon points
-        self.add_label(f"s_(0,{n_cols-3})", "Surveil1")
-        self.add_label(f"s_({n_rows-1},2)", "Surveil2")
+        self.add_label(f"s_({n_cols-3},0)", "Surveil1")
+        self.add_label(f"s_(2,{n_rows-1})", "Surveil2")
+        for row_idx in range(n_rows):
+            self.add_label(f"s_(0,{row_idx})", "Crashed!")
+            self.add_label(f"s_({self.n_cols-1},{row_idx})", "Crashed!")
 
     def clamp_col(self, col_index: int) -> int:
         return max(0, min(col_index, self.n_cols-1))
 
     def clamp_row(self, row_index: int) -> int:
         return max(0, min(row_index, self.n_rows-1))
+
+    def add_standard_transitions_for_mode(
+            self,
+            theta: Parameter,
+            state_coords: Tuple[int],
+            n_rows: int = 10, n_cols: int = 15,
+    ):
+        """
+        add_adjacent_transitions_for_mode
+        Description:
+
+        :param self:
+        :param theta: String representing the current parameter.
+        :param s: tuple containing the row_index and col_index
+        :return: Nothing. Transition systems hould be modified to
+        """
+        # Constants
+
+        # Create string for state
+        s_i = f"s_({state_coords[0]},{state_coords[1]})"
+
+        # Add Transitions
+        #if state_coords[0] != n_rows - 1:  # If current state is at the top of the space, it can not move north
+        s_i_next = f"s_({state_coords[0]},{self.clamp_row(state_coords[1]+1)})"
+        self.add_transition(s_i, "up", theta, s_i_next)
+
+        s_i_next = f"s_({state_coords[0]},{self.clamp_row(state_coords[1]-1)})"
+        self.add_transition(s_i, "down", theta, s_i_next)
+
+        s_i_next = f"s_({self.clamp_col(state_coords[0]-1)},{state_coords[1]})"
+        self.add_transition(s_i, "left", theta, s_i_next)
+
+        s_i_next = f"s_({self.clamp_col(state_coords[0]+1)},{state_coords[1]})"
+        self.add_transition(s_i, "right", theta, s_i_next)
 
     def add_transitions_for_shift(
         self,
@@ -183,7 +220,7 @@ class SadraSystem(ParametricTransitionSystem):
         # Algorithm
         for row_idx in range(self.n_rows):
             for col_idx in range(self.n_cols):
-                state_name = f"s_({row_idx},{col_idx})"
+                state_name = f"s_({col_idx},{row_idx})"
 
                 in_windy_region = (self.windy_region_y_lb <= row_idx) and (row_idx <= self.windy_region_y_ub)
                 in_lava_region = (col_idx == 0) or (col_idx == self.n_cols - 1)
@@ -268,48 +305,13 @@ class SadraSystem(ParametricTransitionSystem):
 
         animation.save(filename=filename, fps=fps)
 
-def get_sadra_system():
+def get_noisy_sadra_system():
     """Gets sadra system."""
 
     return SadraSystem()
 
 
-def add_standard_transitions_for_mode(
-    ts: ParametricTransitionSystem,
-    theta: Parameter,
-    state_coords: Tuple[int],
-    n_rows: int = 10, n_cols: int = 15,
-):
-    """
-    add_adjacent_transitions_for_mode
-    Description:
 
-    :param ts:
-    :param theta: String representing the current parameter.
-    :param s: tuple containing the row_index and col_index
-    :return: Nothing. Transition systems hould be modified to
-    """
-    # Constants
-
-    # Create string for state
-    s_i = f"s_({state_coords[0]},{state_coords[1]})"
-
-    # Add Transitions
-    if state_coords[0] != 0:  # If current state is at the top of the space, it can not move north
-        s_i_next = f"s_({state_coords[0]-1},{state_coords[1]})"
-        ts.add_transition(s_i, "up", theta, s_i_next)
-
-    if state_coords[0] != n_rows - 1:  # If current state is a the bottom of the space, it can not move south.
-        s_i_next = f"s_({state_coords[0]+1},{state_coords[1]})"
-        ts.add_transition(s_i, "down", theta, s_i_next)
-
-    if state_coords[1] != 0:  # If the current state is at the left of the space, it can not move west (left).
-        s_i_next = f"s_({state_coords[0]},{state_coords[1]-1})"
-        ts.add_transition(s_i, "left", theta, s_i_next)
-
-    if state_coords[1] != n_cols - 1:  # If current state is at the right of the space, it can not move east (right).
-        s_i_next = f"s_({state_coords[0]},{state_coords[1]+1})"
-        ts.add_transition(s_i, "right", theta, s_i_next)
 
 def add_perturbed_transitions_for_mode(
     ts: ParametricTransitionSystem,

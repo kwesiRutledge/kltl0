@@ -9,7 +9,7 @@ import numpy as np
 
 from kltl.systems import TransitionSystem
 from kltl.systems.pts.trajectory import create_random_trajectory_with_N_actions
-from kltl.systems.pts.sadra_noise import get_sadra_system
+from kltl.systems.pts.sadra_noise import get_noisy_sadra_system
 from kltl.systems.pts.parametric_transition_system import ParametricTransitionSystem
 from random import choice
 
@@ -21,7 +21,7 @@ class ControlPolicies:
         self.theta = theta
 
         if system is None:
-            self.system = get_sadra_system()
+            self.system = get_noisy_sadra_system()
         else:
             self.system = system
 
@@ -36,7 +36,7 @@ class ControlPolicies:
         sadra = self.system
         coord = sadra.state_name_to_coordinates
         r_idx, c_idx = coord(trajectory[-1])
-        (goal1, _), (goal2, _) = sadra.labels
+        goal1, goal2 = sadra.labels[0, 0], sadra.labels[1, 0]
         goal1, goal2 = coord(sadra.Y[goal1]), coord(sadra.Y[goal2])
         reach1, reach2 = False, False
         transitions = []
@@ -86,7 +86,7 @@ class ControlPolicies:
         return self.control_policy_1(trajectory, theta=-2)
         
     def control_policy_3(self, trajectory: List[str]):
-        sadra = get_sadra_system()
+        sadra = get_noisy_sadra_system()
         coord = sadra.state_name_to_coordinates
         transitions = []
         

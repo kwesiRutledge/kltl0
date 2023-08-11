@@ -166,3 +166,6 @@ extras/venvs/*
 # Test figures
 **/figures/*.png
 **/figures/*.gif
+
+# Data
+**/data/*.yml
