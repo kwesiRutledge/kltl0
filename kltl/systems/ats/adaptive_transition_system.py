@@ -147,7 +147,7 @@ class AdaptiveTransitionSystem(object):
         for s0 in self.I:
             for (q0_index, sigma, q_index) in automaton.transitions:
                 if automaton.Q[q0_index] in automaton.Q0 and automaton.Sigma[sigma] == set(self.L(s0)):
-                    I_prime += (s0, automaton.Q[q_index])
+                    I_prime += [(s0, automaton.Q[q_index])]
 
         # Create output system
         ts_out = TransitionSystem(S_prime, self.Act, automaton.Q, I=I_prime, transitions=transitions_prime)
