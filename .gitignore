@@ -169,3 +169,5 @@ extras/venvs/*
 
 # Data
 **/data/*.yml
+**.gif
+**.yml
