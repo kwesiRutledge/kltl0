@@ -224,9 +224,11 @@ def create_random_trajectory_with_N_actions(sys: ParametricTransitionSystem, N: 
     trajectory_as_list = [s0, y0]
     for step_idx in range(N):
         post_si = []
+        assert len(sys.post(s_i, theta=theta)) > 0, f"Post of {s_i} is empty!"
         while len(post_si) == 0:  # Keep sampling actions until post is non empty
             a_i = np.random.choice(sys.Act, 1)[0]
             post_si = sys.post(s_i, a_i, theta)
+
 
         s_ip1 = np.random.choice(post_si, 1)[0]
         y_ip1 = np.random.choice(sys.O(s_ip1, theta), 1)[0]
