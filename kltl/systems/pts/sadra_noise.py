@@ -45,7 +45,7 @@ class SadraSystem(ParametricTransitionSystem):
                     if (row_idx >= windy_region_y_lb) and (row_idx <= windy_region_y_ub):
                         self.add_transitions_for_shift(theta, (col_idx, row_idx))
                     else:
-                        self.add_standard_transitions_for_mode("0", (col_idx, row_idx), n_rows, n_cols)
+                        self.add_standard_transitions_for_mode(theta, (col_idx, row_idx), n_rows, n_cols)
                         
         # Create the output map
         for row_idx in range(n_rows):
@@ -123,46 +123,46 @@ class SadraSystem(ParametricTransitionSystem):
         s_i = f"s_({state_coords[0]},{state_coords[1]})"
 
         # Add Transitions
-        s_i_up = f"s_({self.clamp_row(state_coords[0] - 1)},{self.clamp_col(state_coords[1] - shift)})"
+        s_i_up = f"s_({self.clamp_col(state_coords[0] + shift)},{self.clamp_row(state_coords[1] + 1)})"
         self.add_transition(s_i, "up", theta, s_i_up)
 
-        s_i_down = f"s_({self.clamp_row(state_coords[0] + 1)},{self.clamp_col(state_coords[1] - shift)})"
+        s_i_down = f"s_({self.clamp_col(state_coords[0] + shift)},{self.clamp_row(state_coords[1] - 1)})"
         self.add_transition(s_i, "down", theta, s_i_down)
 
-        s_i_left = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift - 1)})"
+        s_i_left = f"s_({self.clamp_col(state_coords[0] + shift - 1)},{state_coords[1]})"
         self.add_transition(s_i, "left", theta, s_i_left)
 
-        s_i_right = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift + 1)})"
+        s_i_right = f"s_({self.clamp_col(state_coords[0] + shift + 1)},{state_coords[1]})"
         self.add_transition(s_i, "right", theta, s_i_right)
         
         # Add Transitions for noise with greater disturbance
         shift += 1
-        
-        s_i_up = f"s_({self.clamp_row(state_coords[0] - 1)},{self.clamp_col(state_coords[1] - shift)})"
+
+        s_i_up = f"s_({self.clamp_col(state_coords[0] + shift)},{self.clamp_row(state_coords[1] + 1)})"
         self.add_transition(s_i, "up", theta, s_i_up)
 
-        s_i_down = f"s_({self.clamp_row(state_coords[0] + 1)},{self.clamp_col(state_coords[1] - shift)})"
+        s_i_down = f"s_({self.clamp_col(state_coords[0] + shift)},{self.clamp_row(state_coords[1] - 1)})"
         self.add_transition(s_i, "down", theta, s_i_down)
 
-        s_i_left = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift - 1)})"
+        s_i_left = f"s_({self.clamp_col(state_coords[0] + shift - 1)},{state_coords[1]})"
         self.add_transition(s_i, "left", theta, s_i_left)
 
-        s_i_right = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift + 1)})"
+        s_i_right = f"s_({self.clamp_col(state_coords[0] + shift + 1)},{state_coords[1]})"
         self.add_transition(s_i, "right", theta, s_i_right)
         
         # Add Transitions for noise with less disturbance
-        shift -= 1
-        
-        s_i_up = f"s_({self.clamp_row(state_coords[0] - 1)},{self.clamp_col(state_coords[1] - shift)})"
+        shift -= 2
+
+        s_i_up = f"s_({self.clamp_col(state_coords[0] + shift)},{self.clamp_row(state_coords[1] + 1)})"
         self.add_transition(s_i, "up", theta, s_i_up)
 
-        s_i_down = f"s_({self.clamp_row(state_coords[0] + 1)},{self.clamp_col(state_coords[1] - shift)})"
+        s_i_down = f"s_({self.clamp_col(state_coords[0] + shift)},{self.clamp_row(state_coords[1] - 1)})"
         self.add_transition(s_i, "down", theta, s_i_down)
 
-        s_i_left = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift - 1)})"
+        s_i_left = f"s_({self.clamp_col(state_coords[0] + shift - 1)},{state_coords[1]})"
         self.add_transition(s_i, "left", theta, s_i_left)
 
-        s_i_right = f"s_({state_coords[0]},{self.clamp_col(state_coords[1] - shift + 1)})"
+        s_i_right = f"s_({self.clamp_col(state_coords[0] + shift + 1)},{state_coords[1]})"
         self.add_transition(s_i, "right", theta, s_i_right)
         
 
@@ -177,10 +177,10 @@ class SadraSystem(ParametricTransitionSystem):
         # Constants
 
         # Parse
-        row_idx = int(state[state.index("(")+1:state.index(",")])
-        col_idx = int(state[state.index(",")+1:state.index(")")])
+        col_idx = int(state[state.index("(")+1:state.index(",")])
+        row_idx = int(state[state.index(",")+1:state.index(")")])
 
-        return row_idx, col_idx
+        return col_idx, row_idx
 
     def plot(self, state: State = None, ax=None)->Dict[str, Any]:
         """
@@ -204,7 +204,7 @@ class SadraSystem(ParametricTransitionSystem):
 
         # Place Current State
         if state is not None:
-            row_idx, col_idx = self.state_name_to_coordinates(state)
+            col_idx, row_idx = self.state_name_to_coordinates(state)
             curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
             robot_patch = ax.add_patch(curr_state_circle)
 
@@ -223,7 +223,7 @@ class SadraSystem(ParametricTransitionSystem):
                 state_name = f"s_({col_idx},{row_idx})"
 
                 in_windy_region = (self.windy_region_y_lb <= row_idx) and (row_idx <= self.windy_region_y_ub)
-                in_lava_region = (col_idx == 0) or (col_idx == self.n_cols - 1)
+                in_lava_region = "Crashed!" in self.L(state_name)
 
                 color = "blue" if in_windy_region else "black"
                 color = "red" if in_lava_region else color
@@ -261,17 +261,28 @@ class SadraSystem(ParametricTransitionSystem):
         self.plot_environment(ax, square_sl=square_sl)
 
         # Plot trajectory
+        trajectory_matrix = np.zeros((0, 2), dtype=int)
         for k in range(len(traj)):
             s_k = traj.s(k)
-            row_idx, col_idx = self.state_name_to_coordinates(s_k)
-            curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
-            ax.add_patch(curr_state_circle)
+            col_idx, row_idx = self.state_name_to_coordinates(s_k)
+            # curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
+            # ax.add_patch(curr_state_circle)
+            trajectory_matrix = np.vstack((trajectory_matrix, np.array([col_idx, row_idx], dtype=int)))
+
+        ax.plot(trajectory_matrix[:, 0], trajectory_matrix[:, 1], color="red", linewidth=2.0)
 
         # Set Axis
         ax.set_xlim([-square_sl, self.n_cols * square_sl])
         ax.set_ylim([- square_sl, self.n_rows * square_sl])
 
-    def save_animated_trajectory(self, traj: FiniteTrajectory, filename: str, ax=None, fps: int = 2):
+    def save_animated_trajectory(
+        self,
+        traj: FiniteTrajectory,
+        filename: str,
+        ax=None,
+        fps: int = 2,
+        show_trajectory: bool = False,
+    ):
         """
         save_animated_trajectory
         Description:
@@ -291,10 +302,13 @@ class SadraSystem(ParametricTransitionSystem):
         # Plot the initial state.
         plot_objects = self.plot(state=traj.s(0), ax=ax)
 
+        if show_trajectory:
+            self.plot_trajectory(traj=traj, ax=ax)
+
         # Create a function to update the plot.
         def update(frame_index):
             # Update robot position
-            plot_objects["robot"].center = np.flip(self.state_name_to_coordinates(traj.s(frame_index)))
+            plot_objects["robot"].center = self.state_name_to_coordinates(traj.s(frame_index))
 
         # Construct the animation, using the update function as the animation
         # director.
@@ -305,46 +319,12 @@ class SadraSystem(ParametricTransitionSystem):
 
         animation.save(filename=filename, fps=fps)
 
+        plt.close(fig)
+
 def get_noisy_sadra_system():
-    """Gets sadra system."""
+    """Gets noisy sadra system."""
 
     return SadraSystem()
-
-
-
-
-def add_perturbed_transitions_for_mode(
-    ts: ParametricTransitionSystem,
-    theta: Parameter,
-    state_coords: Tuple[int],
-    n_rows: int = 10, n_cols: int = 15,
-):
-    """
-    add_adjacent_transitions_for_mode
-    Description:
-
-    :param ts:
-    :param theta: String representing the current parameter.
-    :param s: tuple containing the row_index and col_index
-    :return: Nothing. Transition systems hould be modified to
-    """
-    # Constants
-
-    # Create string for state
-    s_i = f"s_({state_coords[0]},{state_coords[1]})"
-
-    # Add Transitions
-    s_i_up = f"s_({max(state_coords[0]-1, 0)},{max(0,state_coords[1]-2)})"
-    ts.add_transition(s_i, "up", theta, s_i_up)
-
-    s_i_down = f"s_({min(state_coords[0]+1, n_rows)},{max(0, state_coords[1]-2)})"
-    ts.add_transition(s_i, "down", theta, s_i_down)
-
-    s_i_left = f"s_({state_coords[0]},{max(state_coords[1]-3, 0)})"
-    ts.add_transition(s_i, "left", theta, s_i_left)
-
-    s_i_right = f"s_({state_coords[0]},{max(state_coords[1]-1, 0)})"
-    ts.add_transition(s_i, "right", theta, s_i_right)
 
 # x_i = 's_(8,13)'
 

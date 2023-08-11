@@ -222,17 +222,30 @@ class SadraSystem(ParametricTransitionSystem):
         self.plot_environment(ax, square_sl=square_sl)
 
         # Plot trajectory
+        traj_mat = np.zeros((0, 2), dtype=int)
         for k in range(len(traj)):
             s_k = traj.s(k)
-            row_idx, col_idx = self.state_name_to_coordinates(s_k)
-            curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
-            ax.add_patch(curr_state_circle)
+            col_idx, row_idx = self.state_name_to_coordinates(s_k)
+            traj_mat = np.vstack((traj_mat, np.array([col_idx, row_idx], dtype=int)))
+
+            # curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
+            # ax.add_patch(curr_state_circle)
+
+        # Plot the trajectory
+        ax.plot(traj_mat[:, 0], traj_mat[:, 1], color="red", linewidth=2.0)
 
         # Set Axis
         ax.set_xlim([-square_sl, self.n_cols * square_sl])
         ax.set_ylim([- square_sl, self.n_rows * square_sl])
 
-    def save_animated_trajectory(self, traj: FiniteTrajectory, filename: str, ax=None, fps: int = 2):
+    def save_animated_trajectory(
+            self,
+            traj: FiniteTrajectory,
+            filename: str,
+            ax=None,
+            fps: int = 2,
+            show_trajectory: bool = False,
+    ):
         """
         save_animated_trajectory
         Description:
@@ -251,6 +264,9 @@ class SadraSystem(ParametricTransitionSystem):
 
         # Plot the initial state.
         plot_objects = self.plot(state=traj.s(0), ax=ax)
+
+        if show_trajectory:
+            self.plot_trajectory(traj, ax=ax)  # Plot the trajectory
 
         # Create a function to update the plot.
         def update(frame_index):
