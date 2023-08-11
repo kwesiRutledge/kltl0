@@ -4,7 +4,7 @@ Description:
     A module for managing trajectories of a transition system.
 """
 
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict
 import numpy as np
 
 from kltl.systems.ts.traces import FiniteTrace, InfiniteTrace
@@ -229,6 +229,57 @@ def create_random_trajectory_with_N_actions(sys: ParametricTransitionSystem, N: 
             a_i = np.random.choice(sys.Act, 1)[0]
             post_si = sys.post(s_i, a_i, theta)
 
+
+        s_ip1 = np.random.choice(post_si, 1)[0]
+        y_ip1 = np.random.choice(sys.O(s_ip1, theta), 1)[0]
+
+        # Append
+        trajectory_as_list += [a_i, s_ip1, y_ip1]
+
+        # Update
+        s_i = s_ip1
+
+    return FiniteTrajectory(trajectory_as_list, theta, sys)
+
+def create_closed_loop_trajectory_with_N_steps(
+    sys: ParametricTransitionSystem,
+    N: int,
+    policy: Dict[State, Action],
+    theta: Parameter = None,
+):
+    """
+    finite_traj = create_closed_loop_trajectory_with_N_steps(sys, N, policy)
+    Description:
+        Creates a closed loop trajectory with N steps.
+    :param sys:
+    :param N:
+    :param policy: A dictionary that maps the current state to an action.
+        TODO: Create a more universal way for defining policies
+    :return:
+    """
+    raise NotImplementedError
+    # Input Processing
+    if theta is None:
+        theta = np.random.choice(sys.Theta, 1)[0]
+    assert theta in sys.Theta, f"Parameter {theta} is not in parameter space!"
+
+    # Select an initial condition
+    s0 = np.random.choice(sys.I, 1)
+    y0 = np.random.choice(sys.O(s0, theta), 1)[0]
+
+    # Simulate
+    s_i = s0
+    theta_est_i = sys.Theta
+    trajectory_as_list = [s0, y0]
+    for step_idx in range(N):
+        post_si = []
+        assert len(sys.post(s_i, theta=theta)) > 0, f"Post of {s_i} is empty!"
+        while len(post_si) == 0:  # Keep sampling actions until post is non empty
+            a_i = "left" # Default
+            if sys.S.index(s_i) not in policy:
+                p_si = policy[sys.S.index(s_i)]
+
+            post_si = sys.post(s_i, a_i)
 
         s_ip1 = np.random.choice(post_si, 1)[0]
         y_ip1 = np.random.choice(sys.O(s_ip1, theta), 1)[0]

@@ -4,7 +4,7 @@ Description:
     A module for managing trajectories of a transition system.
 """
 
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict
 import numpy as np
 
 from kltl.systems.ts import FiniteTrace, InfiniteTrace
@@ -133,7 +133,9 @@ def create_random_trajectory_with_N_actions(sys: TransitionSystem, N: int):
     """
 
     # Select an initial condition
-    s0 = np.random.choice(sys.I, 1)
+    I_indices = [sys.S.index(s) for s in sys.I]
+    s0_index = np.random.choice(I_indices, 1)
+    s0 = sys.S[s0_index]
 
     s_i = s0
     trajectory_as_list = [s0]
@@ -147,6 +149,45 @@ def create_random_trajectory_with_N_actions(sys: TransitionSystem, N: int):
 
         # Append
         trajectory_as_list += [a_i, s_ip1]
+
+        # Update
+        s_i = s_ip1
+
+    return FiniteTrajectory(trajectory_as_list, sys)
+
+def create_closed_loop_trajectory_with_N_steps(
+    sys: TransitionSystem,
+    N: int,
+    policy: Dict[State, Action],
+):
+    """
+    finite_traj = create_closed_loop_trajectory_with_N_steps(sys, N, policy)
+    Description:
+        Creates a closed loop trajectory with N steps.
+    :param sys:
+    :param N:
+    :param policy: A dictionary that maps the current state to an action.
+        TODO: Create a more universal way for defining policies
+    :return:
+    """
+
+    # Select an initial condition
+    I_indices = [sys.S.index(s) for s in sys.I]
+    s0 = np.random.choice(I_indices, 1)[0] # Index of first state
+
+    # Simulate
+    s_i = s0
+    trajectory_as_list = [sys.S[s0]]
+    for step_idx in range(N):
+        post_si = []
+        while len(post_si) == 0:  # Keep sampling actions until post is non empty
+            a_i = policy[s_i][0]
+            post_si = sys.post_indices(sys.S[s_i], a_i)
+
+        s_ip1 = np.random.choice(post_si, 1)[0]
+
+        # Append
+        trajectory_as_list += [a_i, sys.S[s_ip1]]
 
         # Update
         s_i = s_ip1
