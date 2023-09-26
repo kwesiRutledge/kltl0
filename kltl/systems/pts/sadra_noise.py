@@ -182,7 +182,7 @@ class SadraSystem(ParametricTransitionSystem):
 
         return col_idx, row_idx
 
-    def plot(self, state: State = None, ax=None)->Dict[str, Any]:
+    def plot(self, state: State = None, ax=None, robot_color: str="red")->Dict[str, Any]:
         """
 
         :param ax: Axes to plot things on if one doesn't already exist.
@@ -199,20 +199,39 @@ class SadraSystem(ParametricTransitionSystem):
         square_sl = 1.0
         circle_radius = square_sl/4.0
 
+        plot_patches = {}
+
         # Plot the grid of state spaces
         self.plot_environment(ax, square_sl=square_sl)
 
         # Place Current State
         if state is not None:
-            col_idx, row_idx = self.state_name_to_coordinates(state)
-            curr_state_circle = Circle((col_idx, row_idx), circle_radius, color="red")
-            robot_patch = ax.add_patch(curr_state_circle)
+            robot_patch = self.plot_robot(state, ax, robot_color=robot_color, circle_radius=circle_radius)
+            plot_patches["robot"] = robot_patch
 
         # Set Axis
         ax.set_xlim([-square_sl, self.n_cols * square_sl])
         ax.set_ylim([- square_sl, self.n_rows * square_sl])
 
-        return {"robot": robot_patch}
+        return plot_patches
+
+    def plot_robot(
+        self,
+        state: State,
+        ax: plt.Axes,
+        robot_color: str="red",
+        circle_radius: float=0.25,
+    ):
+        """
+
+        :return:
+        """
+        # Constants
+        col_idx, row_idx = self.state_name_to_coordinates(state)
+        curr_state_circle = Circle((col_idx, row_idx), circle_radius, color=robot_color)
+        robot_patch = ax.add_patch(curr_state_circle)
+
+        return robot_patch
 
     def plot_environment(self, ax: plt.Axes, square_sl: float = 1.0):
         # Constants
@@ -239,7 +258,13 @@ class SadraSystem(ParametricTransitionSystem):
                 )
                 ax.add_patch(s_i_square)
 
-    def plot_trajectory(self, traj: FiniteTrajectory, ax=None):
+    def plot_trajectory(
+        self,
+        traj: FiniteTrajectory,
+        ax=None,
+        linewidth: float = 3.0,
+        path_color: str = "red",
+    ):
         """
         plot_trajectory
         Description:
@@ -251,7 +276,7 @@ class SadraSystem(ParametricTransitionSystem):
         # Input Processing
         if ax is None:
             fig = plt.figure()
-            ax = fig.subplots(1, 1, 1)
+            ax = fig.subplots(1, 1)
 
         # Constants
         square_sl = 1.0
@@ -269,7 +294,11 @@ class SadraSystem(ParametricTransitionSystem):
             # ax.add_patch(curr_state_circle)
             trajectory_matrix = np.vstack((trajectory_matrix, np.array([col_idx, row_idx], dtype=int)))
 
-        ax.plot(trajectory_matrix[:, 0], trajectory_matrix[:, 1], color="red", linewidth=2.0)
+        ax.plot(
+            trajectory_matrix[:, 0], trajectory_matrix[:, 1],
+            color=path_color,
+            linewidth=linewidth,
+        )
 
         # Set Axis
         ax.set_xlim([-square_sl, self.n_cols * square_sl])
